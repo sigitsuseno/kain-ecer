@@ -1,0 +1,86 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@font-face {
+    font-family: "Open Sans";
+    font-style: normal;
+    font-weight: 300 800;
+    font-display: swap;
+    src: url("../font/open_sans/OpenSans-VariableFont_wdth,wght.ttf")
+        format("truetype");
+}
+@font-face {
+    font-family: "Open Sans";
+    font-style: italic;
+    font-weight: 300 800;
+    font-display: swap;
+    src: url("../font/open_sans/OpenSans-Italic-VariableFont_wdth,wght.ttf")
+        format("truetype");
+}
+@font-face {
+    font-family: "Roboto";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../font/roboto/Roboto-VariableFont_wdth,wght.ttf")
+        format("truetype");
+}
+@font-face {
+    font-family: "Roboto";
+    font-style: italic;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../font/roboto/Roboto-Italic-VariableFont_wdth,wght.ttf")
+        format("truetype");
+}
+@font-face {
+    font-family: "Roboto Condensed";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../font/roboto/RobotoCondensed-VariableFont_wght.ttf")
+        format("truetype");
+}
+
+@theme {
+    --font-sans: "Roboto Condensed", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+    --font-arial: "Arial", sans-serif;
+    --font-tms: "Times New Roman", sans-serif;
+    --color-primary: #010c25;
+    --color-button: #07c2b8;
+}
+:root {
+    --primary:#010c25;
+        --color-button: #07c2b8;
+}
+
+.input {
+    @apply border border-gray-300 bg-white rounded-lg px-3 h-8 flex items-center w-fit focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 5px #ddd8d8c2;
+    border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #37373741;
+    border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #b30000;
+}

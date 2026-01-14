@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg1"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient2">
+      <stop
+         style="stop-color:#000080;stop-opacity:1"
+         offset="0"
+         id="stop2" />
+      <stop
+         style="stop-color:#28220b;stop-opacity:1"
+         offset="1"
+         id="stop3" />
+    </linearGradient>
+    <linearGradient
+       xlink:href="#linearGradient2"
+       id="linearGradient3"
+       x1="32.522251"
+       y1="30.273373"
+       x2="90.820122"
+       y2="60.373753"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     id="layer1">
+    <rect
+       style="fill:url(#linearGradient3);fill-opacity:1;stroke-width:1.55708"
+       id="rect1"
+       width="64"
+       height="48"
+       x="19.165703"
+       y="16.820581"
+       ry="6.5736465" />
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:27.7198px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;stroke-width:1.88998"
+       x="22.31131"
+       y="43.54335"
+       id="text1"><tspan
+         id="tspan1"
+         style="fill:#ffffff;stroke-width:1.88998"
+         x="22.31131"
+         y="43.54335">ERP</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.5873px;font-family:Verdana;-inkscape-font-specification:'Verdana, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffcc00;stroke-width:1.19913"
+       x="46.238995"
+       y="58.815819"
+       id="text3"><tspan
+         id="tspan3"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.5873px;font-family:Verdana;-inkscape-font-specification:'Verdana, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffcc00;stroke-width:1.19913"
+         x="46.238995"
+         y="58.815819">Lite</tspan></text>
+    <path
+       style="fill:#ffcc00;stroke-width:0.199148"
+       d="m 36.69077,40.537488 7.421859,8.984355 -15.624967,11.197892 h -8.593731 l 16.406214,-11.3281 -7.552066,-8.072899 z"
+       id="path3" />
+  </g>
+</svg>
