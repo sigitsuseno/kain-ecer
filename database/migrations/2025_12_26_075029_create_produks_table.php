@@ -25,6 +25,7 @@ return new class extends Migration
             $table->decimal('harga_jual_grosir', 19, 2)->default(0);
             $table->decimal('harga_beli', 19, 2)->default(0);
             $table->unsignedBigInteger('kategori_id')->nullable();
+            $table->unsignedBigInteger('warna_id')->nullable();
             $table->unsignedBigInteger('supplier_id')->nullable();
             $table->unsignedBigInteger('gudang_id')->nullable();
             $table->string('mode')->default('grosir');

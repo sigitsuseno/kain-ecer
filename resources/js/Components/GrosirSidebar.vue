@@ -50,21 +50,23 @@ const props = defineProps({
                 </Link>
             </div>
             <div class="pt-2">
-                <a href="#" class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
+                <a href="/grosir/penjualan"
+                    class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
                     <div class="w-8 h-8 shrink-0 p-0.5"><img :src="ImgPjl" alt=""></div>
                     <span class="ml-4">Penjualan</span>
                 </a>
             </div>
 
             <div class="pt-2">
-                <Link href="/grosir/penerimaan-barang"
+                <Link href="/grosir/penerimaan"
                     class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
                     <div class="w-8 h-8 shrink-0 p-0.5"><img :src="ImgPnm" alt=""></div>
                     <span class="ml-4">Penerimaan</span>
                 </Link>
             </div>
             <div class="pt-2">
-                <a href="#" class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
+                <a href="/grosir/stock"
+                    class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
                     <div class="w-8 h-8 shrink-0 p-0.5"><img :src="ImgStc" alt=""></div>
                     <span class="ml-4">Stock</span>
                 </a>

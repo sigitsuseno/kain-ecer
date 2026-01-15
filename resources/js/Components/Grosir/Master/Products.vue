@@ -8,6 +8,7 @@ import ProductModal from './ProductModal.vue';
 const props = defineProps({
     products: Object,
     categories: Array,
+    kategoriNama: Array,
     gudangs: Array,
     allProducts: Array,
 });
@@ -44,8 +45,8 @@ function search(params) {
 
 <template>
     <div class="p-4 relative">
-        <ProductTable :products="products" :categories="categories" @create="openCreate" @edit="openEdit"
-            @view="openView" @search="search" />
+        <ProductTable :products="products" :categories="categories" :kategoriNama="kategoriNama" @create="openCreate"
+            @edit="openEdit" @view="openView" @search="search" />
 
         <ProductModal v-if="modalOpen" :mode="modalMode" :product="selectedProduct" :categories="categories"
             :gudangs="gudangs" :all-products="allProducts" @close="modalOpen = false" />

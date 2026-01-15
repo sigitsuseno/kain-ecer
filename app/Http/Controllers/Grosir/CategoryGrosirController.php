@@ -16,6 +16,7 @@ class CategoryGrosirController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request);
         $request->validate([
             'nama_kategori' => [
                 'required',
@@ -31,10 +32,12 @@ class CategoryGrosirController extends Controller
                     }
                 },
             ],
+            'status' => 'required|in:nama,warna',
         ]);
 
         $kategori = Kategori::create([
             'nama_kategori' => $request->nama_kategori,
+            'status' => $request->status,
             'slug' => Str::slug($request->nama_kategori, '-'),
         ]);
 
@@ -43,15 +46,15 @@ class CategoryGrosirController extends Controller
 
     public function update(Request $request, $id)
     {
+        // dd($request);
         $request->validate([
             'nama_kategori' => [
                 'required',
                 'string',
                 'max:255',
-                function ($attribute, $value, $fail) use ($id) {
+                function ($attribute, $value, $fail) {
                     // Cek ke database: apakah ada nama yang sama setelah keduanya diubah ke huruf kecil
                     $exists = Kategori::whereRaw('LOWER(nama_kategori) = ?', [strtolower($value)])
-                        ->where('id', '!=', $id)
                         ->exists();
 
                     if ($exists) {
@@ -59,11 +62,13 @@ class CategoryGrosirController extends Controller
                     }
                 },
             ],
+            'status' => 'required|in:nama,warna',
         ]);
 
         $kategori = Kategori::findOrFail($id);
         $kategori->update([
             'nama_kategori' => $request->nama_kategori,
+            'status' => $request->status,
             'slug' => Str::slug($request->nama_kategori, '-'),
         ]);
 

@@ -21,6 +21,7 @@ class Produk extends Model
         'harga_beli',
         'kategori_id',
         'supplier_id',
+        'warna_id',
         'gudang_id',
         'mode',
         'status',
@@ -32,6 +33,11 @@ class Produk extends Model
     {
         return $this->belongsTo(Kategori::class, 'kategori_id');
     }
+    public function warna()
+    {
+        return $this->belongsTo(Kategori::class, 'warna_id');
+    }
+
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');

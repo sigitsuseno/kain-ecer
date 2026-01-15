@@ -6,6 +6,7 @@ const emit = defineEmits(['create', 'edit', 'view', 'search']);
 const props = defineProps({
     products: Object,
     categories: Array,
+    kategoriNama: Array,
 });
 
 const search = ref('');
@@ -42,9 +43,9 @@ function resetFilter() {
 
                 <select v-model="kategori" @change="submitSearch"
                     class="px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm cursor-pointer">
-                    <option value="">Semua Warna / Kategori</option>
-                    <option v-for="c in categories" :key="c.id" :value="c.id">
-                        {{ c.nama_kategori }}
+                    <option value="">Kategori</option>
+                    <option v-for="nps in kategoriNama" :key="nps.id" :value="nps.id">
+                        {{ nps.nama_kategori }}
                     </option>
                 </select>
 

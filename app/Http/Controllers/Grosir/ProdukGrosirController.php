@@ -31,19 +31,27 @@ class ProdukGrosirController extends Controller
             'tipe' => 'nullable|string',
             'lebar_kain' => 'nullable|string',
         ]);
-        // normalisasi warna
+
         $namaProdukClean = trim(ucwords(strtolower($request->nama_produk)));
+        $kode_warnaClean = trim(ucwords(strtolower($request->kode_warna)));
 
         $kategori = Kategori::firstOrCreate(
             ['slug' => Str::slug($namaProdukClean)],
-            ['nama_kategori' => $namaProdukClean]
+            ['nama_kategori' => $namaProdukClean, 'status' => 'nama']
+        );
+
+        $warna = Kategori::firstOrCreate(
+            ['slug' => Str::slug($kode_warnaClean)],
+            ['nama_kategori' => $kode_warnaClean, 'status' => 'warna']
         );
 
         $data['kategori_id'] = $kategori->id;
+        $data['warna_id'] = $warna->id;
         $data['nama_produk'] = $namaProdukClean;
+        $data['kode_warna'] = $kode_warnaClean;
         $data['gudang_id'] = 1;
 
-        $data['kode_produk'] = 'PRD-' . strtoupper(Str::random(16));
+        $data['kode_produk'] = 'GR-' . date('ym') . '-' . strtoupper(Str::random(6));
         $data['slug'] = Str::slug($request->nama_produk) . '-' . Str::slug($request->kode_warna);
 
         Produk::create($data);
@@ -63,17 +71,25 @@ class ProdukGrosirController extends Controller
         ]);
 
         $namaProdukClean = trim(ucwords(strtolower($request->nama_produk)));
+        $kode_warnaClean = trim(ucwords(strtolower($request->kode_warna)));
 
         $kategori = Kategori::firstOrCreate(
             ['slug' => Str::slug($namaProdukClean)],
-            ['nama_kategori' => $namaProdukClean]
+            ['nama_kategori' => $namaProdukClean, 'status' => 'nama']
+        );
+
+        $warna = Kategori::firstOrCreate(
+            ['slug' => Str::slug($kode_warnaClean)],
+            ['nama_kategori' => $kode_warnaClean, 'status' => 'warna']
         );
 
         $data['kategori_id'] = $kategori->id;
+        $data['warna_id'] = $warna->id;
         $data['nama_produk'] = $namaProdukClean;
+        $data['kode_warna'] = $kode_warnaClean;
         $data['gudang_id'] = 1;
 
-        $data['kode_produk'] = 'PRD-' . strtoupper(Str::random(16));
+        $data['kode_produk'] = 'GR-' . date('ym') . '-' . strtoupper(Str::random(6));
         $data['slug'] = Str::slug($request->nama_produk) . '-' . Str::slug($request->kode_warna);
 
         $produk->update($data);

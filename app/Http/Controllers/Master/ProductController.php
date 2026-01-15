@@ -21,7 +21,7 @@ class ProductController extends Controller
         ]);
 
         return Produk::where('nama_produk', $request->nama_produk)
-            ->pluck('kode_warna');
+            ->pluck('nama_produk');
     }
 
     public function store(Request $request)

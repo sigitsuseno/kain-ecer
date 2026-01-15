@@ -13,6 +13,7 @@ const editingId = ref(null);
 // Form untuk Tambah & Edit
 const form = useForm({
     nama_kategori: '',
+    status: 'nama',
 });
 
 
@@ -37,23 +38,20 @@ function handleCreate() {
     });
 }
 
-// 2. Fungsi Masuk Mode Edit
 function startEdit(category) {
     editingId.value = category.id;
-    form.nama_kategori = category.nama_kategori; // Isi input dengan nama yang ada
+    form.nama_kategori = category.nama_kategori;
 }
 
-// 3. Fungsi Simpan Perubahan (Update)
 function handleUpdate(id) {
     if (!form.nama_kategori) return;
 
-    // Menggunakan router.put untuk update data spesifik
     router.put(`/grosir/master/categories/${id}`, {
         nama_kategori: form.nama_kategori
     }, {
         preserveScroll: true,
         onSuccess: () => {
-            editingId.value = null; // Keluar dari mode edit
+            editingId.value = null;
             form.reset();
         },
         onError: (errors) => {
@@ -66,13 +64,11 @@ function handleUpdate(id) {
     });
 }
 
-// 4. Fungsi Batal Edit
 function cancelEdit() {
     editingId.value = null;
     form.reset();
 }
 
-// 5. Fungsi Hapus
 function handleDelete(id, nama_kategori) {
     Swal.fire({
         text: `Data "${nama_kategori}" akan dihapus permanen!`,
@@ -100,12 +96,25 @@ function handleDelete(id, nama_kategori) {
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <h3 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Tambah Kategori Baru</h3>
             <div class="flex gap-2">
-                <div class="w-full">
-                    <input v-model="form.nama_kategori" @keyup.enter="handleCreate" type="text"
-                        placeholder="Contoh: Rayon Twill" :disabled="editingId !== null"
-                        class="w-full flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm" />
-                    <div v-if="form.errors.nama_kategori" class="text-red-500 text-[10px] mt-1">
-                        {{ form.errors.nama_kategori }}
+                <div class="w-full grid grid-cols-[1fr_250px] gap-2">
+                    <div class="w-full">
+                        <input v-model="form.nama_kategori" @keyup.enter="handleCreate" type="text"
+                            placeholder="Contoh: Rayon Twill" :disabled="editingId !== null"
+                            class="w-full flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm" />
+                        <div v-if="form.errors.nama_kategori" class="text-red-500 text-[10px] mt-1">
+                            {{ form.errors.nama_kategori }}
+                        </div>
+                    </div>
+                    <div class="w-full">
+                        <select v-model="form.status" @keyup.enter="handleCreate" type="text"
+                            :disabled="editingId !== null"
+                            class="w-full flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm">
+                            <option value="nama">Nama</option>
+                            <option value="warna">Warna</option>
+                        </select>
+                        <div v-if="form.errors.status" class="text-red-500 text-[10px] mt-1">
+                            {{ form.errors.status }}
+                        </div>
                     </div>
                 </div>
                 <button @click="handleCreate" :disabled="form.processing || editingId !== null"
@@ -126,6 +135,8 @@ function handleDelete(id, nama_kategori) {
                                 No</th>
                             <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama
                                 Kategori</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                Status</th>
                             <th
                                 class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
                                 Aksi</th>
@@ -157,7 +168,7 @@ function handleDelete(id, nama_kategori) {
                                     {{ c.nama_kategori }}
                                 </span>
                             </td>
-
+                            <td class="px-6 py-4 text-sm text-slate-400 font-mono text-center">{{ c.status }}</td>
                             <td class="px-6 py-4 text-right space-x-1">
                                 <template v-if="editingId !== c.id">
                                     <button @click="startEdit(c)"

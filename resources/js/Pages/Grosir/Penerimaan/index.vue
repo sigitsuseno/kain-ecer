@@ -5,7 +5,7 @@
                 <i class='bx bxs-package'></i> <span>Input Kain Baru</span>
             </div>
             <div>
-                <Link href="/dashboard/penerimaan-barang/create"
+                <Link href="/grosir/penerimaan/create"
                     class="px-2 h-8 flex items-center justify-center text-sm bg-button active:scale-90 text-white rounded-sm">
                     <i class='bx bx-plus'></i>
                     Tambah
@@ -51,39 +51,7 @@
                 </div>
             </div>
         </div>
-        <div class="absolute top-0 right-0 w-85 h-[calc(100vh-48px)] bg-slate-200 p-4 shadow">
-            <div class="h-full">
-                <div class="border-b border-primary/30">
-                    <h3>Form Input</h3>
-                </div>
-                <form action="" class="mt-4 space-y-3">
-                    <div>
-                        <label class="">
-                            <span class="text-sm">Nama Product</span>
-                            <input type="text"
-                                class="w-full h-8 px-3 bg-white outline-none text-sm rounded-sm border border-primary/30">
-                            <!-- <span class="text-xs">Error</span> -->
-                        </label>
-                    </div>
-                    <div>
-                        <label class="">
-                            <span class="text-sm">Warna / Seri</span>
-                            <input type="text"
-                                class="w-full h-8 px-3 bg-white outline-none text-sm rounded-sm border border-primary/30">
-                            <!-- <span class="text-xs">Error</span> -->
-                        </label>
-                    </div>
-                    <div>
-                        <label class="">
-                            <span class="text-sm">Nama Product</span>
-                            <input type="text"
-                                class="w-full h-8 px-3 bg-white outline-none text-sm rounded-sm border border-primary/30">
-                            <!-- <span class="text-xs">Error</span> -->
-                        </label>
-                    </div>
-                </form>
-            </div>
-        </div>
+
     </div>
 </template>
 
