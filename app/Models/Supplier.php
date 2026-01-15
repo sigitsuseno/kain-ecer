@@ -6,13 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class Supplier extends Model
 {
-    protected $table = 'suppliers';
+    protected $table = "suppliers";
     protected $fillable = [
-        'nama_pt',
-        'nama',
-        'phone',
-        'email',
-        'alamat',
-        'status',
+        "nama_pt",
+        "nama",
+        "phone",
+        "email",
+        "alamat",
+        "status",
     ];
+
+    public function pembelian()
+    {
+        return $this->hasMany(Pembelian::class, "supplier_id");
+    }
 }
