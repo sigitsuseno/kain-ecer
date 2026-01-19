@@ -7,35 +7,37 @@ use Illuminate\Database\Eloquent\Model;
 class Produk extends Model
 {
     protected $fillable = [
-        'gambar',
-        'kode_produk',
         'nama_produk',
-        'kode_warna',
-        'slug',
-        'lebar_kain',
-        'tipe',
-        'satuan',
-        'panjang_perroll',
-        'harga_jual_ecer',
-        'harga_jual_grosir',
-        'harga_beli',
         'kategori_id',
-        'supplier_id',
-        'warna_id',
-        'gudang_id',
-        'mode',
-        'status',
+        'satuan_id',
+        'brand_id',
         'deskripsi',
-        'catatan',
     ];
+    public function varian()
+    {
+        return $this->hasMany(ProdukVarian::class, 'produk_id');
+    }
+
+    public function stokFisik()
+    {
+        return $this->hasManyThrough(
+            StokFisik::class,
+            ProdukVarian::class,
+            'produk_id',
+            'varian_id',
+            'id',
+            'id'
+        );
+    }
 
     public function kategori()
     {
         return $this->belongsTo(Kategori::class, 'kategori_id');
     }
-    public function warna()
+
+    public function satuan()
     {
-        return $this->belongsTo(Kategori::class, 'warna_id');
+        return $this->belongsTo(Satuan::class, 'satuan_id');
     }
 
     public function supplier()

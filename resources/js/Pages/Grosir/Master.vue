@@ -24,6 +24,7 @@ const props = defineProps({
     suppliers: Array,
     pelanggans: Array,
     nama_produks: Array,
+    satuan: Array,
 });
 
 </script>
@@ -42,7 +43,7 @@ const props = defineProps({
         <div class="w-full h-[calc(100vh-88px)] bg-indigo-100">
             <div v-if="activeTab === 'products'" class="w-full h-full overflow-hidden">
                 <Products :products="products" :categories="categories" :gudangs="gudangs" :all-products="semua_produk"
-                    :kategoriNama="nama_produks" />
+                    :kategoriNama="nama_produks" :satuan="satuan" />
             </div>
             <div v-if="activeTab === 'categories'" class="w-full h-full overflow-hidden">
                 <Categories :categories="categories" />

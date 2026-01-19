@@ -2,14 +2,13 @@
 import { useForm } from '@inertiajs/vue3'
 import { ref, computed, watch } from 'vue'
 
-
-
 const props = defineProps({
     mode: String,
     product: Object,
     categories: Array,
     gudangs: Array,
-    allProducts: Array,
+    allProducts: Array, // Pastikan ini berisi list produk lengkap dengan kode_warna-nya
+    satuan: Array,
 })
 
 const emit = defineEmits(['close'])
@@ -17,104 +16,109 @@ const emit = defineEmits(['close'])
 const isView = computed(() => props.mode === 'view')
 const isEdit = computed(() => props.mode === 'edit')
 
-// State untuk UI dropdown
 const showDropdown = ref(false)
+const showVarianDropdown = ref(false)
 
-const filteredCategories = computed(() => {
-    const s = form.nama_produk?.toLowerCase()?.trim()
-    if (!s || isEdit.value) return []
-
-    return (props.categories ?? [])
-        .filter(c => typeof c?.nama_kategori === 'string')
-        .filter(c =>
-            c.nama_kategori.toLowerCase().includes(s) &&
-            c.nama_kategori.toLowerCase() !== s
-        )
-})
-
-const warnaDariNamaproduk = computed(() => {
-    // 1. Pastikan nama_produk sudah diisi dan allProducts tersedia
-    if (!form.nama_produk || !props.allProducts) return []
-
-    const namaCari = form.nama_produk.toLowerCase().trim()
-
-    // 2. Ambil data dari props.allProducts (handle jika itu pagination atau array biasa)
-    const listSemua = props.allProducts?.data || props.allProducts || []
-
-    return listSemua
-        .filter(p => {
-            // Hanya ambil produk yang namanya sama
-            const isSameName = p.nama_produk?.toLowerCase().trim() === namaCari
-
-            // JIKA SEDANG EDIT: Jangan masukkan warna dari produk itu sendiri ke daftar duplikat
-            if (isEdit.value && p.id === props.product?.id) return false
-
-            return isSameName
-        })
-        .map(p => p.kode_warna) // Ambil kolom kode_warna saja
-})
-
-const normalize = (v) =>
-    v?.toString().toLowerCase().trim()
-
-const isDuplicate = computed(() => {
-    if (!form.kode_warna || !warnaDariNamaproduk.value.length) return false
-
-    return warnaDariNamaproduk.value
-        .map(normalize)
-        .includes(normalize(form.kode_warna))
-})
-
-
-
-const isColorValid = computed(() => {
-    return form.nama_produk.length > 0 &&
-        form.kode_warna.length > 0 &&
-        !isDuplicate.value
-})
-
+// --- FORM ---
 const form = useForm({
+    id: null,
     nama_produk: '',
+    kategori_id: '',
     kode_warna: '',
-    satuan: 'yard',
+    satuan_id: '',
     tipe: 'polos',
     lebar_kain: '',
     deskripsi: '',
 })
 
-// 3. Fungsi pilih kategori yang diperbaiki
+// --- LOGIKA DUPLIKAT (Nama Produk + Varian) ---
+const isDuplicate = computed(() => {
+    const currentNama = form.nama_produk?.toLowerCase().trim()
+    const currentVarian = form.kode_warna?.toLowerCase().trim()
+
+    // Jangan validasi jika input masih kosong
+    if (!currentNama || !currentVarian) return false
+
+    const listSemua = props.allProducts?.data || props.allProducts || []
+
+    return listSemua.some(p => {
+        // Jika sedang EDIT, abaikan produk yang sedang dibuka
+        if (isEdit.value && p.id === props.product?.id) return false
+
+        return p.nama_produk?.toLowerCase().trim() === currentNama &&
+            p.kode_warna?.toLowerCase().trim() === currentVarian
+    })
+})
+
+// --- LOGIKA DROPDOWN NAMA PRODUK ---
+const filteredCategories = computed(() => {
+    const s = form.nama_produk?.toLowerCase()?.trim()
+    if (!s || isEdit.value) return []
+    return (props.categories ?? []).filter(c =>
+        c.nama_kategori.toLowerCase().includes(s) &&
+        c.nama_kategori.toLowerCase() !== s
+    )
+})
+
 function selectCategory(name) {
     form.nama_produk = name
     showDropdown.value = false
 }
 
-// Watcher untuk mengisi data saat Edit atau Reset saat Create
-watch(
-    () => props.product,
-    (p) => {
-        if (p) {
-            form.nama_produk = p.nama_produk
-            form.kode_warna = p.kode_warna
-            form.tipe = p.tipe
-            form.satuan = p.satuan
-            form.lebar_kain = p.lebar_kain
-            form.deskripsi = p.deskripsi
-        } else {
-            form.reset()
+// --- LOGIKA DROPDOWN VARIAN ---
+const uniqueVarians = computed(() => {
+    const s = form.kode_warna?.toLowerCase()?.trim()
+    if (!s || isEdit.value) return []
+
+    const listSemua = props.allProducts?.data || props.allProducts || []
+    const varianNames = listSemua.map(p => p.kode_warna).filter(Boolean)
+    const uniqueList = [...new Set(varianNames)]
+
+    return uniqueList.filter(name =>
+        name.toLowerCase().includes(s) && name.toLowerCase() !== s
+    )
+})
+
+function selectVarian(name) {
+    form.kode_warna = name
+    showVarianDropdown.value = false
+}
+
+function closeVarianWithDelay() {
+    setTimeout(() => { showVarianDropdown.value = false }, 200)
+}
+
+// --- WATCHER ---
+watch(() => props.product, (p) => {
+    if (p) {
+        form.id = p.id // Ini ID ProdukVarian
+        // Ambil data dari relasi p.produk
+        form.nama_produk = p.produk?.nama_produk ?? ''
+        form.kategori_id = p.produk?.kategori_id ?? ''
+        form.satuan_id = p.produk?.satuan_id ?? ''
+        form.deskripsi = p.produk?.deskripsi ?? ''
+
+        // Ambil data dari varian itu sendiri
+        form.kode_warna = p.nama_varian ?? ''
+        form.tipe = p.tipe ?? 'polos'
+        form.lebar_kain = p.lebar ?? ''
+    } else {
+        form.reset()
+
+        // Cari ID untuk satuan 'Yard' secara dinamis
+        const defaultUnit = props.satuan.find(
+            (u) => u.nama_satuan.toLowerCase() === 'yard'
+        )
+
+        if (defaultUnit) {
+            form.satuan_id = defaultUnit.id
         }
-    },
-    { immediate: true }
-)
+    }
+}, { immediate: true })
 
 const labelKeterangan = computed(() => {
-    if (form.tipe === 'polos') {
-        return 'Kode Warna';
-    } else if (form.tipe === 'motif') {
-        return 'Kode Seri';
-    } else {
-        return 'Pilih Tipe Dahulu';
-    }
-});
+    return form.tipe === 'polos' ? 'Kode Warna' : 'Kode Seri'
+})
 
 function submit() {
     const routeName = isEdit.value
@@ -122,20 +126,15 @@ function submit() {
         : route('grosir.master.products.store')
 
     const method = isEdit.value ? 'put' : 'post'
-
-    form[method](routeName, {
-        onSuccess: () => emit('close'),
-    })
+    form[method](routeName, { onSuccess: () => emit('close') })
 }
 </script>
 
 <template>
-    <!-- <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"> -->
     <div class="absolute top-0 right-0 w-85 xl:w-96 h-[calc(100vh-90px)] bg-slate-200 p-4 shadow">
-        <div class="w-full h-full rounded-2xl bg-white shadow-xl">
+        <div class="w-full h-full rounded-2xl bg-white shadow-xl overflow-hidden flex flex-col">
 
-            <!-- HEADER -->
-            <div class="flex items-center justify-between border-b px-6 py-4">
+            <div class="flex items-center justify-between border-b px-6 py-4 flex-shrink-0">
                 <h2 class="text-base font-semibold text-slate-800">
                     {{ mode === 'create' ? 'Tambah' : mode === 'edit' ? 'Edit' : 'Detail' }} Produk
                 </h2>
@@ -144,47 +143,31 @@ function submit() {
                 </button>
             </div>
 
-            <!-- BODY -->
-            <div class="px-6 py-5">
-
-                <!-- VIEW MODE -->
-                <div v-if="isView" class="grid grid-cols-1 text-sm">
+            <div class="px-6 py-5 overflow-y-auto flex-grow">
+                <div v-if="isView" class="grid grid-cols-1 gap-4 text-sm">
                     <div>
                         <p class="text-slate-500">Nama Produk</p>
-                        <p class="font-medium">{{ product.nama_produk }}</p>
+                        <p class="font-medium">{{ product.produk.nama_produk }}</p>
                     </div>
-
                     <div>
-                        <p class="text-slate-500">{{ product.tipe === 'polos' ? 'Kode Warna' : 'Kode Seri' }}</p>
-                        <p class="font-medium">{{ product.kode_warna }}</p>
+                        <p class="text-slate-500">Varian</p>
+                        <p class="font-medium">{{ product.nama_varian }}</p>
                     </div>
-
                     <div>
                         <p class="text-slate-500">Kategori</p>
-                        <p class="font-medium">
-                            {{ product.kategori?.nama_kategori ?? '-' }}
-                        </p>
+                        <p class="font-medium">{{ product.produk.kategori?.nama_kategori ?? '-' }}</p>
                     </div>
-
                     <div>
                         <p class="text-slate-500">Satuan</p>
-                        <p class="font-medium uppercase">{{ product.satuan }}</p>
+                        <p class="font-medium uppercase">{{ product.produk.satuan.nama_satuan }}</p>
                     </div>
-                    <div>
-                        <p class="text-slate-500">Stok</p>
-                        <p class="font-medium">{{ product.gudang?.nama_gudang ?? '-' }}</p>
-                    </div>
-
-                    <div class="col-span-2">
+                    <div class="col-span-1">
                         <p class="text-slate-500">Deskripsi</p>
-                        <p class="font-medium">{{ product.deskripsi ?? '-' }}</p>
+                        <p class="font-medium">{{ product.produk.deskripsi ?? '-' }}</p>
                     </div>
                 </div>
 
-                <!-- FORM MODE -->
-                <form v-else @submit.prevent="submit" class="space-y-3">
-
-                    <!-- Nama Produk -->
+                <form v-else @submit.prevent="submit" class="space-y-4">
                     <div class="relative">
                         <label class="text-sm font-medium">Nama Produk</label>
                         <input v-model="form.nama_produk" @focus="showDropdown = true"
@@ -192,50 +175,37 @@ function submit() {
                             placeholder="Ketik nama kain..." />
 
                         <div v-if="showDropdown && filteredCategories.length > 0"
-                            class="absolute z-10 mt-1 max-h-40 w-full overflow-y-auto rounded-lg border bg-white shadow-lg">
+                            class="absolute z-30 mt-1 max-h-40 w-full overflow-y-auto rounded-lg border bg-white shadow-lg">
                             <div v-for="cat in filteredCategories" :key="cat.id"
                                 @click="selectCategory(cat.nama_kategori)"
-                                class="cursor-pointer px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-600">
+                                class="cursor-pointer px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 border-b last:border-0">
                                 {{ cat.nama_kategori }}
                             </div>
                         </div>
                     </div>
-                    <!-- Kode Warna -->
-                    <div>
+
+                    <div class="relative">
                         <label class="text-sm font-medium">{{ labelKeterangan }}</label>
-                        <div class="relative flex items-center">
-                            <input v-model="form.kode_warna"
-                                class="mt-1 w-full rounded-sm border border-black/30 px-3 h-8 text-sm pr-10"
-                                :class="{ 'border-red-500 bg-red-50': isDuplicate }"
-                                placeholder="contoh: Biru Dongker" />
+                        <input v-model="form.kode_warna" @focus="showVarianDropdown = true" @blur="closeVarianWithDelay"
+                            class="mt-1 w-full rounded-sm border border-black/30 px-3 h-8 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                            :class="{ 'border-red-500 bg-red-50': isDuplicate }"
+                            placeholder="Ketik warna atau seri..." />
 
-                            <span v-if="isColorValid" class="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                            </span>
-
-                            <span v-if="isDuplicate" class="absolute right-3 top-1/2 -translate-y-1/2 text-red-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                            </span>
+                        <div v-if="showVarianDropdown && uniqueVarians.length > 0"
+                            class="absolute z-20 mt-1 max-h-40 w-full overflow-y-auto rounded-lg border bg-white shadow-xl">
+                            <div v-for="(varianName, index) in uniqueVarians" :key="index"
+                                @click="selectVarian(varianName)"
+                                class="cursor-pointer px-4 py-2 text-sm hover:bg-indigo-50 hover:text-indigo-600 border-b last:border-0">
+                                {{ varianName }}
+                            </div>
                         </div>
 
                         <p v-if="isDuplicate" class="mt-1 text-xs text-red-500 font-medium">
-                            Warna ini sudah ada di produk "{{ form.nama_produk }}"!
+                            Warna/Seri ini sudah ada di produk "{{ form.nama_produk }}"!
                         </p>
                     </div>
 
-
                     <div class="grid grid-cols-2 gap-4">
-                        <!-- tipe -->
                         <div>
                             <label class="text-sm font-medium">Tipe Kain</label>
                             <select v-model="form.tipe"
@@ -244,39 +214,33 @@ function submit() {
                                 <option value="motif">Motif</option>
                             </select>
                         </div>
-                        <!-- Satuan -->
                         <div>
                             <label class="text-sm font-medium">Satuan</label>
-                            <select v-model="form.satuan"
-                                class="mt-1 w-full rounded-sm border border-black/30 px-3 h-8 text-sm">
-                                <option value="yard">Yard</option>
-                                <option value="meter">Meter</option>
-                                <option value="kg">Kg</option>
+                            <select v-model="form.satuan_id"
+                                class="mt-1 w-full rounded-sm border border-black/30 px-3 h-8 text-sm focus:ring-2 focus:ring-blue-500">
+                                <option v-if="satuan.length === 0" value="">Memuat satuan...</option>
+                                <option v-for="unit in satuan" :key="unit.id" :value="unit.id">
+                                    {{ unit.nama_satuan }}
+                                </option>
                             </select>
                         </div>
-
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-sm font-medium">Lebar Kain</label>
-                            <input v-model="form.lebar_kain"
-                                class="mt-1 w-full rounded-sm border border-black/30 px-3 h-8 text-sm"
-                                placeholder="Kosongkan bila tidak ada" />
-                            <p v-if="form.errors.lebar_kain" class="text-xs text-red-500">
-                                {{ form.errors.lebar_kain }}
-                            </p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-medium">Lebar Kain</label>
+                        <input v-model="form.lebar_kain"
+                            class="mt-1 w-full rounded-sm border border-black/30 px-3 h-8 text-sm"
+                            placeholder="Kosongkan bila tidak ada" />
+                        <p v-if="form.errors.lebar_kain" class="text-xs text-red-500">{{ form.errors.lebar_kain }}</p>
                     </div>
-                    <!-- Deskripsi -->
-                    <div class="col-span-1">
-                        <label class="text-sm font-medium ">Deskripsi</label>
+
+                    <div>
+                        <label class="text-sm font-medium">Deskripsi</label>
                         <textarea v-model="form.deskripsi"
-                            class="mt-1 w-full rounded-sm border border-black/30 px-3 text-sm" rows="3" />
+                            class="mt-1 w-full rounded-sm border border-black/30 px-3 py-2 text-sm" rows="3" />
                     </div>
 
-                    <!-- ACTION -->
-                    <div class="col-span-2 flex justify-end gap-2 pt-4">
+                    <div class="flex justify-end gap-2 pt-4">
                         <button type="button" @click="emit('close')"
                             class="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">
                             Batal
@@ -286,7 +250,6 @@ function submit() {
                             {{ form.processing ? 'Menyimpan...' : 'Simpan' }}
                         </button>
                     </div>
-
                 </form>
             </div>
         </div>

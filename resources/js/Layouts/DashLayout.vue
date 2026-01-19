@@ -30,10 +30,10 @@ const breadcrumbs = computed(() => {
     <div class="w-full h-screen relative flex flex-wrap">
         <input id="toogleSidebar" type="checkbox" class="peer sr-only">
         <label for="toogleSidebar"
-            class="absolute top-0 left-50 flex items-center justify-center w-12 h-12 cursor-pointer hover:bg-slate-100 peer-checked:left-16 transition-all duration-300">
+            class="absolute top-0 left-50 flex items-center justify-center w-10 h-10 cursor-pointer hover:bg-slate-100 peer-checked:left-16 transition-all duration-300">
             <IconSidebar />
         </label>
-        <header class="w-full h-12 bg-amber-100 flex items-center pl-64 peer-checked:pl-28 transition-all duration-300">
+        <header class="w-full h-10 bg-amber-100 flex items-center pl-64 peer-checked:pl-28 transition-all duration-300">
             <div class="w-full">
                 <ol class="inline-flex items-center space-x-1">
 
@@ -54,7 +54,7 @@ const breadcrumbs = computed(() => {
                 </ol>
             </div>
         </header>
-        <aside class="peer-checked:w-16 w-50 h-[calc(100vh-48px)] shrink-0 relative transition-all duration-300">
+        <aside class="peer-checked:w-16 w-50 h-[calc(100vh-40px)] shrink-0 relative transition-all duration-300">
             <Sidebar v-if="auth.user.role === 'owner'" :auth="auth" />
 
             <EcerSidebar v-else-if="auth.user.role === 'admin-ecer'" :auth="auth" />
@@ -64,7 +64,7 @@ const breadcrumbs = computed(() => {
             <div v-else class="p-4 text-white">Role tidak terdaftar</div>
         </aside>
         <main
-            class="peer-checked:w-[calc(100%-64px)] w-[calc(100%-200px)] h-[calc(100vh-48px)] transition-all duration-300">
+            class="peer-checked:w-[calc(100%-64px)] w-[calc(100%-200px)] h-[calc(100vh-40px)] transition-all duration-300">
             <slot></slot>
         </main>
     </div>

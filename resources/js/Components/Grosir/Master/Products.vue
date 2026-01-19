@@ -11,6 +11,7 @@ const props = defineProps({
     kategoriNama: Array,
     gudangs: Array,
     allProducts: Array,
+    satuan: Array,
 });
 
 const modalOpen = ref(false);
@@ -44,12 +45,12 @@ function search(params) {
 </script>
 
 <template>
-    <div class="p-4 relative">
+    <div class="w-full h-full p-4 relative">
+
         <ProductTable :products="products" :categories="categories" :kategoriNama="kategoriNama" @create="openCreate"
             @edit="openEdit" @view="openView" @search="search" />
 
-        <ProductModal v-if="modalOpen" :mode="modalMode" :product="selectedProduct" :categories="categories"
-            :gudangs="gudangs" :all-products="allProducts" @close="modalOpen = false" />
-
+        <ProductModal v-if="modalOpen" :mode="modalMode" :product="selectedProduct" :satuan="satuan"
+            :categories="categories" :gudangs="gudangs" :all-products="allProducts" @close="modalOpen = false" />
     </div>
 </template>

@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Grosir;
 use App\Http\Controllers\Controller;
 use App\Models\Kategori;
 use App\Models\Produk;
+use App\Models\ProdukVarian;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ProdukGrosirController extends Controller
 {
+
     public function colorsByName(Request $request)
     {
         $request->validate([
@@ -23,77 +25,80 @@ class ProdukGrosirController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'nama_produk' => 'required|string|max:255',
-            'kode_warna' => 'required|string|max:255',
-            'satuan' => 'required|in:meter,yard,kg',
-            'deskripsi' => 'nullable|string',
-            'tipe' => 'nullable|string',
-            'lebar_kain' => 'nullable|string',
+        $request->validate([
+            "nama_produk" => 'required|string|max:255',
+            "kode_warna" => 'required|string|max:255',
+            "satuan_id" => 'required',
+            "tipe" => 'required|string|max:255',
+            "lebar_kain" => 'nullable|string|max:255',
+            "deskripsi" => 'nullable',
         ]);
 
+        // dd($request);
         $namaProdukClean = trim(ucwords(strtolower($request->nama_produk)));
-        $kode_warnaClean = trim(ucwords(strtolower($request->kode_warna)));
 
         $kategori = Kategori::firstOrCreate(
             ['slug' => Str::slug($namaProdukClean)],
             ['nama_kategori' => $namaProdukClean, 'status' => 'nama']
         );
 
-        $warna = Kategori::firstOrCreate(
-            ['slug' => Str::slug($kode_warnaClean)],
-            ['nama_kategori' => $kode_warnaClean, 'status' => 'warna']
-        );
+        $kategoriId = $kategori->id;
 
-        $data['kategori_id'] = $kategori->id;
-        $data['warna_id'] = $warna->id;
-        $data['nama_produk'] = $namaProdukClean;
-        $data['kode_warna'] = $kode_warnaClean;
-        $data['gudang_id'] = 1;
+        $produk = Produk::create([
+            'nama_produk' => $request->nama_produk,
+            'kategori_id' => $kategoriId,
+            'satuan_id' => $request->satuan_id,
+            'deskripsi' => $request->deskripsi,
+        ]);
 
-        $data['kode_produk'] = 'GR-' . date('ym') . '-' . strtoupper(Str::random(6));
-        $data['slug'] = Str::slug($request->nama_produk) . '-' . Str::slug($request->kode_warna);
+        ProdukVarian::create([
+            'produk_id' => $produk->id,
+            'gudang_id' => 1,
+            'nama_varian' => $request->kode_warna,
+            'tipe' => $request->tipe,
+            'lebar' => $request->lebar_kain ?? 0,
+        ]);
 
-        Produk::create($data);
 
         return back()->with('success', 'Produk berhasil ditambahkan');
     }
 
-    public function update(Request $request, Produk $produk)
+    public function update(Request $request, $id)
     {
-        $data = $request->validate([
-            'nama_produk' => 'required|string|max:255',
-            'kode_warna' => 'required|string|max:255',
-            'satuan' => 'required|in:meter,yard,kg',
-            'deskripsi' => 'nullable|string',
-            'tipe' => 'nullable|string',
-            'lebar_kain' => 'nullable|string',
+
+        $varian = ProdukVarian::with('produk')->findOrFail($id);
+        $produkInduk = $varian->produk;
+
+        // 2. Validasi
+        $request->validate([
+            "nama_produk" => 'required|string|max:255',
+            "kode_warna"  => 'required|string|max:255',
+            "satuan_id"   => 'required',
+            "lebar_kain"  => 'nullable|numeric',
         ]);
 
+        // 3. Logic Kategori (Tetap seperti milik Anda)
         $namaProdukClean = trim(ucwords(strtolower($request->nama_produk)));
-        $kode_warnaClean = trim(ucwords(strtolower($request->kode_warna)));
-
         $kategori = Kategori::firstOrCreate(
             ['slug' => Str::slug($namaProdukClean)],
             ['nama_kategori' => $namaProdukClean, 'status' => 'nama']
         );
 
-        $warna = Kategori::firstOrCreate(
-            ['slug' => Str::slug($kode_warnaClean)],
-            ['nama_kategori' => $kode_warnaClean, 'status' => 'warna']
-        );
+        // 4. UPDATE Produk Induk (Level 1)
+        $produkInduk->update([
+            'nama_produk' => $request->nama_produk,
+            'kategori_id' => $kategori->id,
+            'satuan_id'   => $request->satuan_id,
+            'deskripsi'   => $request->deskripsi,
+        ]);
 
-        $data['kategori_id'] = $kategori->id;
-        $data['warna_id'] = $warna->id;
-        $data['nama_produk'] = $namaProdukClean;
-        $data['kode_warna'] = $kode_warnaClean;
-        $data['gudang_id'] = 1;
+        // 5. UPDATE Varian (Level 2)
+        $varian->update([
+            'nama_varian' => $request->kode_warna, // Pastikan nama kolom di DB 'nama_varian' atau 'kode_warna'
+            'tipe'        => $request->tipe,
+            'lebar'       => $request->lebar_kain ?: 0,
+        ]);
 
-        $data['kode_produk'] = 'GR-' . date('ym') . '-' . strtoupper(Str::random(6));
-        $data['slug'] = Str::slug($request->nama_produk) . '-' . Str::slug($request->kode_warna);
-
-        $produk->update($data);
-
-        return back()->with('success', 'Produk berhasil diperbarui');
+        return back()->with('success', 'Produk dan Varian berhasil diperbarui');
     }
 }

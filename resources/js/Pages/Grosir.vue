@@ -1,6 +1,6 @@
 <template>
-    <div>
-        Grosir
+    <div class="w-full">
+
     </div>
 </template>
 

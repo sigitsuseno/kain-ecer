@@ -11,8 +11,8 @@ class Pembelian extends Model
         'nomer_pembelian',
         'tanggal_transaksi',
         'status',
-        'total_roll',
-        'total_panjang',
+        'total_jumlah_qty',
+        'total_jumlah_panjang',
         'catatan',
     ];
 

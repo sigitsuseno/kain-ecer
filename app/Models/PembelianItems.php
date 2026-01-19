@@ -8,9 +8,9 @@ class PembelianItems extends Model
 {
     protected $fillable = [
         'pembelian_id',
-        'produk_id',
-        'panjang_perroll',
-        'jumlah_roll',
+        'varian_id',
+        'total_qty',
+        'total_panjang',
     ];
 
     public function pembelian()
@@ -21,5 +21,15 @@ class PembelianItems extends Model
     public function produk()
     {
         return $this->hasOne(Produk::class, 'produk_id');
+    }
+
+    public function details()
+    {
+        return $this->hasMany(PembelianItemsDetails::class, 'pembelian_item_id');
+    }
+
+    public function varian()
+    {
+        return $this->belongsTo(ProdukVarian::class, 'varian_id');
     }
 }

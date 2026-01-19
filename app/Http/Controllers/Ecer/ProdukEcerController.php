@@ -11,6 +11,10 @@ use Illuminate\Validation\Rule;
 
 class ProdukEcerController extends Controller
 {
+    public function index()
+    {
+        return inertia('Ecer/Produk');
+    }
     public function colorsByName(Request $request)
     {
         $request->validate([

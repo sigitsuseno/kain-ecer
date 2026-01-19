@@ -16,8 +16,8 @@ return new class extends Migration {
             $table->string("nomer_pembelian")->unique();
             $table->date("tanggal_transaksi")->nullable();
             $table->string("status")->default("UNPAID");
-            $table->decimal("total_roll")->nullable();
-            $table->decimal("total_panjang")->nullable();
+            $table->decimal("total_jumlah_qty")->nullable();
+            $table->decimal("total_jumlah_panjang")->nullable();
             $table->text("catatan")->nullable();
             $table->timestamps();
         });

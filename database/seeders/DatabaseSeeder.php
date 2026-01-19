@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Gudang;
 use App\Models\Kategori;
 use App\Models\Pelanggan;
+use App\Models\Satuan;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -66,5 +67,18 @@ class DatabaseSeeder extends Seeder
             'alamat' => 'Jl. Melati No. 45',
             'status' => 'aktif',
         ]);
+
+        $dataSatuan = [
+            ['nama' => 'Yard', 'inisial' => 'Yd'],
+            ['nama' => 'Meter', 'inisial' => 'M'],
+            ['nama' => 'Kilogram', 'inisial' => 'Kg'],
+        ];
+
+        foreach ($dataSatuan as $item) {
+            Satuan::firstOrCreate(
+                ['nama_satuan' => $item['nama']],
+                ['inisial' => $item['inisial']]
+            );
+        }
     }
 }

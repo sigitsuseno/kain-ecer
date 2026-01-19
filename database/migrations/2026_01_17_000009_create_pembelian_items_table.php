@@ -13,9 +13,9 @@ return new class extends Migration {
         Schema::create("pembelian_items", function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger("pembelian_id")->nullable();
-            $table->unsignedBigInteger("produk_id")->nullable();
-            $table->bigInteger("panjang_perroll")->nullable();
-            $table->bigInteger("jumlah_roll")->nullable();
+            $table->unsignedBigInteger("varian_id")->nullable();
+            $table->bigInteger("total_panjang")->nullable();
+            $table->bigInteger("total_qty")->nullable();
             $table->timestamps();
         });
     }
