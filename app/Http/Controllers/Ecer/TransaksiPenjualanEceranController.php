@@ -62,7 +62,9 @@ class TransaksiPenjualanEceranController extends Controller
                 'produk',
                 'stok',
                 'details' => fn($q) => $q->where('qty', '>', 0)->with('satuan'),
-            ])->get(),
+            ])
+                ->whereHas('details', fn($q) => $q->where('qty', '>', 0))
+                ->get(),
             'company' => Perusahaan::find(1) ?? null,
         ]);
     }

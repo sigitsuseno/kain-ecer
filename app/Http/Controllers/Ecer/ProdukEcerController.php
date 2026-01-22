@@ -32,6 +32,7 @@ class ProdukEcerController extends Controller
             'details'
         ])->where('gudang_id', 1)
             ->where('panjang', '>', 0)
+            ->whereHas('details', fn($q) => $q->where('qty', '>', 0))
             ->when($request->search, function ($q) use ($request) {
                 $q->where('nama_varian', 'like', "%{$request->search}%")
                     ->orWhereHas('produk', function ($pq) use ($request) {

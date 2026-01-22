@@ -48,82 +48,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- <div v-if="step === 4" class="p-6">
-                        <h2 class="font-bold text-lg mb-4">Nota</h2>
-                        <div id="printable-receipt" class="print-only receipt-container">
-                            <div class="receipt-header">
-                                <h2 class="store-name">NAMA TOKO ANDA</h2>
-                                <p>Jl. Tekstil No. 123, Kota A</p>
-                                <p>Telp: 0812-3456-7890</p>
-                            </div>
-
-                            <div class="receipt-divider">--------------------------------</div>
-
-                            <div class="receipt-info">
-                                <p>Nota: {{ draft.nomer_nota }}</p>
-                                <p>Tgl : {{ today }}</p>
-                                <p>Plg : {{ draft.pelanggan?.nama }}</p>
-                            </div>
-
-                            <div class="receipt-divider">--------------------------------</div>
-
-                            <div class="receipt-items">
-                                <div v-for="item in cart" :key="item.variant_id" class="receipt-item-group">
-                                    <div class="item-main">
-                                        <span class="item-name">{{ item.nama }} - {{ item.warna }}</span>
-                                    </div>
-                                    <div v-for="roll in item.details" :key="roll.roll_id" class="item-detail">
-                                        <span>Roll {{ roll.roll_id }} ({{ roll.qty }} Yrd x {{ format(item.harga)
-                                        }})</span>
-                                        <span>{{ format(roll.qty * item.harga) }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="receipt-divider">--------------------------------</div>
-
-                            <div class="receipt-total">
-                                <div class="total-row">
-                                    <span>TOTAL</span>
-                                    <span>{{ format(grandTotal) }}</span>
-                                </div>
-                                <div class="total-row">
-                                    <span>BAYAR</span>
-                                    <span>{{ format(payment.total_bayar) }}</span>
-                                </div>
-                                <div class="total-row">
-                                    <span>KEMBALI</span>
-                                    <span>{{ format(payment.total_bayar - grandTotal) }}</span>
-                                </div>
-                            </div>
-
-                            <div class="receipt-footer">
-                                <p>Terima Kasih</p>
-                                <p>Barang yang sudah dipotong</p>
-                                <p>tidak dapat dikembalikan.</p>
-                            </div>
-                        </div>
-                    </div> -->
-                    <!-- 
-                    <div v-if="step === 4" class="p-6">
-                        <h2 class="font-bold text-lg mb-4">Nota</h2>
-                        <div class="bg-white p-4 border rounded shadow-sm">
-                            <div v-for="item in cart" :key="item.variant_id" class="mb-2 border-b pb-2 last:border-0">
-                                <div class="flex justify-between font-bold text-sm">
-                                    <span>{{ item.nama }} ({{ item.warna }})</span>
-                                    <span>{{ format(calculateItemTotal(item)) }}</span>
-                                </div>
-                                <div v-for="roll in item.details" :key="roll.roll_id"
-                                    class="text-xs text-slate-500 flex justify-between pl-2">
-                                    <span>- Roll {{ roll.roll_id }}: {{ roll.qty }} Yrd</span>
-                                </div>
-                            </div>
-                            <div class="mt-3 border-t pt-2 font-bold text-lg text-right text-blue-600">
-                                Total: {{ format(grandTotal) }}
-                            </div>
-                        </div>
-                    </div> -->
                 </div>
 
             </div>
@@ -206,19 +130,27 @@
 
                         <div class="px-3 pb-3 space-y-2">
                             <div v-for="(roll, rIdx) in item.details" :key="rIdx"
-                                class="flex items-center gap-2 bg-slate-50 p-2 rounded border border-dashed border-slate-300">
-                                <div class="flex-1">
-                                    <div class="text-[10px] text-slate-500 italic uppercase font-bold">Roll ID: {{
-                                        roll.roll_id }}</div>
-                                    <div class="flex items-center gap-2">
-                                        <input type="number" v-model="roll.qty"
-                                            class="w-20 border rounded px-1 text-sm font-bold" step="0.01">
-                                        <span class="text-xs text-slate-400 font-bold">Yrd</span>
-                                    </div>
+                                class="flex items-center justify-between gap-2 bg-slate-50 p-2 rounded border border-dashed border-slate-300">
+                                <div class="flex items-center gap-2">
+                                    <input type="number" v-model="roll.qty" :disabled="roll.satuan_beli === 'Kg'"
+                                        class="w-20 border rounded px-1 text-sm font-bold" step="0.01">
+
+                                    <select v-model="roll.satuan_beli" @change="updateKoefisien(roll)"
+                                        class="text-xs border rounded bg-white p-1">
+                                        <option value="Yard">Yard</option>
+                                        <option value="Meter">Meter</option>
+                                        <option value="Kg">KG</option>
+                                    </select>
                                 </div>
+
                                 <div class="text-right">
                                     <div class="text-[10px] text-slate-400">Subtotal</div>
-                                    <div class="text-xs font-bold text-blue-600">{{ format(roll.qty * item.harga) }}
+                                    <div class="text-xs font-bold text-blue-600">
+                                        <span v-if="roll.koefisien !== 1"
+                                            class="text-[9px] text-slate-400 block font-normal">
+                                            (Konversi: {{ (roll.qty * roll.koefisien).toFixed(2) }})
+                                        </span>
+                                        {{ format(roll.qty * roll.koefisien * item.harga) }}
                                     </div>
                                 </div>
                                 <button @click="item.details.splice(rIdx, 1)"
@@ -238,50 +170,6 @@
                         PROSES PEMBAYARAN
                     </button>
                 </div>
-
-                <!-- <div v-if="step === 4" class="p-4 space-y-3">
-                    <h3 class="font-bold border-b pb-2">Pembayaran</h3>
-
-                    <div>
-                        <label class="text-xs text-slate-400 font-bold">TANGGAL BAYAR</label>
-                        <input type="date" v-model="payment.tanggal_bayar" class="w-full border p-2 rounded">
-                    </div>
-
-                    <div>
-                        <label class="text-xs text-slate-400 font-bold">METODE</label>
-                        <select v-model="payment.metode" class="w-full border p-2 rounded">
-                            <option value="CASH">CASH</option>
-                            <option value="TRANSFER">TRANSFER</option>
-                            <option value="EDC">EDC</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="text-xs text-slate-400 font-bold uppercase">Nominal Bayar</label>
-                        <input type="number" v-model="payment.total_bayar"
-                            class="w-full border p-2 rounded font-bold text-green-700 text-lg">
-                    </div>
-
-                    <div v-if="payment.metode !== 'CASH'" class="space-y-3 bg-slate-50 p-3 rounded border">
-                        <div>
-                            <label class="text-xs text-slate-400 font-bold">BANK ASAL / AKUN</label>
-                            <input v-model="payment.bank_asal" placeholder="Contoh: BCA - 123456"
-                                class="w-full border p-2 rounded">
-                        </div>
-                        <div>
-                            <label class="text-xs text-slate-400 font-bold">NO. REF / TRACE</label>
-                            <input v-model="payment.ref" placeholder="No Referensi" class="w-full border p-2 rounded">
-                        </div>
-                    </div>
-                </div>
-
-                <div v-if="step === 4" class="p-4 border-t bg-slate-50">
-                    <button @click="submitPayment"
-                        class="w-full bg-green-600 text-white py-3 rounded font-bold shadow-lg hover:bg-green-700 active:scale-95 transition">
-                        BAYAR & SELESAI
-                    </button>
-                </div> -->
-
             </div>
         </div>
     </div>
@@ -319,9 +207,28 @@ const payment = ref({
     ref: '',
 })
 
-// Fungsi hitung total per item varian
+// Fungsi untuk update koefisien saat select satuan berubah
+const updateKoefisien = (roll) => {
+    // Jika stok YARD mau dikonversi ke METER
+    if (roll.satuan_stok === 'Yard' && roll.satuan_beli === 'Meter') {
+        // Angka qty yard dikali 0.9144 untuk jadi meter
+        roll.koefisien = 0.9144;
+    }
+    // Jika stok METER mau dikonversi ke YARD
+    else if (roll.satuan_stok === 'Meter' && roll.satuan_beli === 'Yard') {
+        // Angka qty meter dikali 1.09361 untuk jadi yard
+        roll.koefisien = 1.09361;
+    }
+    else {
+        roll.koefisien = 1;
+    }
+}
+
 const calculateItemTotal = (item) => {
-    return item.details.reduce((sum, roll) => sum + (roll.qty * item.harga), 0);
+    return item.details.reduce((sum, roll) => {
+        // Rumus: Qty * Koefisien * Harga
+        return sum + (roll.qty * roll.koefisien * item.harga);
+    }, 0);
 }
 
 // Fungsi hitung grand total keseluruhan (dari nested cart)
@@ -350,40 +257,77 @@ const hapusPenjualan = (id) => {
         });
     }
 }
-
 const addRoll = (varian, roll) => {
     let itemProduk = cart.value.find(item => item.variant_id === varian.id);
 
+    // Ambil nama satuan untuk pengecekan (misal: "Yard")
+    const namaSatuanStok = roll.satuan?.nama_satuan || 'Yard';
+
     if (itemProduk) {
         const isRollExist = itemProduk.details.find(d => d.roll_id === roll.id);
-        console.log(isRollExist);
-
         if (!isRollExist) {
             itemProduk.details.push({
                 roll_id: roll.id,
-                nomor_batch: roll.items_details?.nomor_batch || 'N/A',
                 qty: parseFloat(roll.qty),
                 satuan_id: roll.satuan_id,
+                satuan_stok: namaSatuanStok, // Satuan asli di gudang
+                satuan_beli: namaSatuanStok, // Default satuan beli sama dengan stok
+                koefisien: 1 // Default 1 (tanpa konversi)
             });
         } else {
             alert('Roll ini sudah ada di keranjang');
         }
     } else {
         cart.value.push({
-            satuan_id: varian.produk.satuan_id,
             variant_id: varian.id,
-            nama: varian.produk.nama_produk,
-            warna: varian.nama_varian,
+            nama: varian.produk.nama,
+            warna: varian.nama,
             harga: varian.harga_jual || 0,
             details: [{
                 roll_id: roll.id,
-                nomor_batch: roll.items_details?.nomor_batch || 'N/A',
                 qty: parseFloat(roll.qty),
                 satuan_id: roll.satuan_id,
+                satuan_stok: namaSatuanStok,
+                satuan_beli: namaSatuanStok,
+                koefisien: 1
             }]
         });
     }
 };
+
+// const addRoll = (varian, roll) => {
+//     let itemProduk = cart.value.find(item => item.variant_id === varian.id);
+
+//     if (itemProduk) {
+//         const isRollExist = itemProduk.details.find(d => d.roll_id === roll.id);
+//         console.log(isRollExist);
+
+//         if (!isRollExist) {
+//             itemProduk.details.push({
+//                 roll_id: roll.id,
+//                 nomor_batch: roll.items_details?.nomor_batch || 'N/A',
+//                 qty: parseFloat(roll.qty),
+//                 satuan_id: roll.satuan_id,
+//             });
+//         } else {
+//             alert('Roll ini sudah ada di keranjang');
+//         }
+//     } else {
+//         cart.value.push({
+//             satuan_id: varian.produk.satuan_id,
+//             variant_id: varian.id,
+//             nama: varian.produk.nama_produk,
+//             warna: varian.nama_varian,
+//             harga: varian.harga_jual || 0,
+//             details: [{
+//                 roll_id: roll.id,
+//                 nomor_batch: roll.items_details?.nomor_batch || 'N/A',
+//                 qty: parseFloat(roll.qty),
+//                 satuan_id: roll.satuan_id,
+//             }]
+//         });
+//     }
+// };
 
 const handleProsesPembayaran = () => {
     if (cart.value.length === 0) return alert("Keranjang masih kosong")
