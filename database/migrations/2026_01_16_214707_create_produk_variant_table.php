@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('produk_id')->constrained('produks')->onDelete('cascade');
             $table->unsignedBigInteger('gudang_id')->nullable();
-            $table->string('nama_varian')->nullable();
+            $table->string('nama')->nullable();
             $table->string('tipe')->nullable();
-            $table->decimal('lebar', 15, 2)->default(0);
             $table->decimal('panjang', 15, 2)->default(0);
+            $table->decimal('lebar', 15, 2)->default(0);
             $table->decimal('tinggi', 15, 2)->default(0);
             $table->decimal('tebal', 15, 2)->default(0);
             $table->string('sku')->nullable()->unique();

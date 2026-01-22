@@ -134,7 +134,7 @@ function submit() {
     <div class="absolute top-0 right-0 w-85 xl:w-96 h-[calc(100vh-90px)] bg-slate-200 p-4 shadow">
         <div class="w-full h-full rounded-2xl bg-white shadow-xl overflow-hidden flex flex-col">
 
-            <div class="flex items-center justify-between border-b px-6 py-4 flex-shrink-0">
+            <div class="flex items-center justify-between border-b px-6 py-4 shrink-0">
                 <h2 class="text-base font-semibold text-slate-800">
                     {{ mode === 'create' ? 'Tambah' : mode === 'edit' ? 'Edit' : 'Detail' }} Produk
                 </h2>

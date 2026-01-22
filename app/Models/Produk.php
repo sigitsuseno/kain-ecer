@@ -7,27 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 class Produk extends Model
 {
     protected $fillable = [
-        'nama_produk',
+        'nama',
         'kategori_id',
         'satuan_id',
         'brand_id',
         'deskripsi',
+        'status',
+
     ];
+
     public function varian()
     {
         return $this->hasMany(ProdukVarian::class, 'produk_id');
-    }
-
-    public function stokFisik()
-    {
-        return $this->hasManyThrough(
-            StokFisik::class,
-            ProdukVarian::class,
-            'produk_id',
-            'varian_id',
-            'id',
-            'id'
-        );
     }
 
     public function kategori()

@@ -13,12 +13,13 @@ return new class extends Migration {
         Schema::create("pembelians", function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger("supplier_id")->nullable();
-            $table->string("nomer_pembelian")->unique();
-            $table->date("tanggal_transaksi")->nullable();
-            $table->string("status")->default("UNPAID");
-            $table->decimal("total_jumlah_qty")->nullable();
-            $table->decimal("total_jumlah_panjang")->nullable();
+            $table->string("nomer")->unique();
+            $table->date("tanggal")->nullable();
+            $table->decimal("total_pembelian")->nullable();
+            $table->decimal("beban_ongkir")->nullable();
+            $table->decimal("beban_biaya")->nullable();
             $table->text("catatan")->nullable();
+            $table->string("status")->default("STOKED");
             $table->timestamps();
         });
     }

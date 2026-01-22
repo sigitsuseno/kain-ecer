@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('alamat')->nullable();
             $table->string('bank')->nullable();
             $table->string('no_rekening')->nullable();
-            $table->string('nama_kartu')->nullable();
+            $table->string('slug')->nullable();
             $table->string('status')->nullable();
             $table->string('saldo')->nullable();
             $table->timestamps();

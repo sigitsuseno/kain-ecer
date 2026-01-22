@@ -17,8 +17,9 @@ return new class extends Migration
             $table->string('nama')->nullable();
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
+            $table->string('slug')->nullable();
             $table->text('alamat')->nullable();
-            $table->string('status')->default('active');
+            $table->string('status')->default('supplier');
             $table->timestamps();
         });
     }

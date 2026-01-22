@@ -9,7 +9,7 @@ class ProdukVarian extends Model
     protected $fillable = [
         'produk_id',
         'gudang_id',
-        'nama_varian',
+        'nama',
         'tipe',
         'panjang',
         'tinggi',
@@ -25,19 +25,20 @@ class ProdukVarian extends Model
     {
         return $this->belongsTo(Produk::class, 'produk_id');
     }
-    public function stokFisiks()
+    public function stok()
     {
-        return $this->hasMany(StokFisik::class, 'varian_id');
+        return $this->hasOne(Stok::class, 'varian_id');
     }
-    public function detailIsiPaket()
+
+    public function details()
     {
-        return $this->hasMany(DetailPaket::class, 'induk_varian_id');
+        return $this->hasMany(ProdukDetail::class, 'varian_id');
     }
     public function konversi()
     {
         return $this->hasMany(KonversiSatuan::class, 'satuan_id');
     }
-    public function pembelianItem()
+    public function purcItem()
     {
         return $this->hasOne(PembelianItems::class, 'varian_id');
     }

@@ -9,8 +9,11 @@ class PembelianItems extends Model
     protected $fillable = [
         'pembelian_id',
         'varian_id',
+        'satuan_id',
         'total_qty',
-        'total_panjang',
+        'total_jumlah',
+        'harga_beli',
+        'subtotal',
     ];
 
     public function pembelian()

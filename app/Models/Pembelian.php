@@ -8,11 +8,13 @@ class Pembelian extends Model
 {
     protected $fillable = [
         'supplier_id',
-        'nomer_pembelian',
-        'tanggal_transaksi',
+        'nomer',
+        'tanggal',
+        'supplier_id',
+        'total_pembelian',
+        'beban_ongkir',
+        'beban_biaya',
         'status',
-        'total_jumlah_qty',
-        'total_jumlah_panjang',
         'catatan',
     ];
 

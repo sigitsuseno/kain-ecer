@@ -11,7 +11,7 @@ class Supplier extends Model
         "nama_pt",
         "nama",
         "phone",
-        "email",
+        "slug",
         "alamat",
         "status",
     ];

@@ -4,19 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class StokFisik extends Model
+class Stok extends Model
 {
-    protected $table = 'stok_fisiks';
+    protected $table = 'stoks';
 
     protected $fillable = [
         'varian_id',
         'gudang_id',
-        'nomor_batch',
+        'nomor',
         'tanggal_kadaluarsa',
-        'total_panjang',
-        'total_qty',
-        'harga_jual',
-        'harga_beli',
+
     ];
 
     public function varian()
@@ -29,8 +26,8 @@ class StokFisik extends Model
         return $this->belongsTo(Gudang::class, 'gudang_id');
     }
 
-    public function detailPakets()
+    public function details()
     {
-        return $this->HasMany(DetailPaket::class, 'anak_varian_id');
+        return $this->HasMany(ProdukDetail::class, 'stok_id');
     }
 }

@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('detail_pakets', function (Blueprint $table) {
+        Schema::create('produk_details', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('induk_varian_id')->nullable();
-            $table->unsignedBigInteger('anak_varian_id')->nullable();
+            $table->unsignedBigInteger('varian_id')->nullable();
+            $table->unsignedBigInteger('stok_id')->nullable();
             $table->unsignedBigInteger('satuan_id')->nullable();
             $table->decimal('qty', 15, 2)->default(0);
-            $table->decimal('isi_2', 15, 2)->default(0);
+            $table->decimal('isi', 15, 2)->default(0);
             $table->string('status')->default('tersedia');
             $table->timestamps();
         });
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('detail_pakets');
+        Schema::dropIfExists('produk_details');
     }
 };

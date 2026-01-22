@@ -57,6 +57,7 @@ class DatabaseSeeder extends Seeder
             'nama' => 'Budi Santoso',
             'phone' => '081234567890',
             'email' => 'budi@sumbermkmur.com',
+            'email' => 'budi@sumbermkmur.com',
             'alamat' => 'Jl. Raya Ungaran No. 123',
             'status' => 'aktif',
         ]);

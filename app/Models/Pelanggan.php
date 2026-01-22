@@ -15,7 +15,7 @@ class Pelanggan extends Model
         'alamat',
         'bank',
         'no_rekening',
-        'nama_kartu',
+        'slug',
         'status',
         'saldo',
     ];

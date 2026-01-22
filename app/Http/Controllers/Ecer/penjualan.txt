@@ -1,0 +1,895 @@
+hallo gemini. kamu Bertindak sebagai Senior Full-Stack Engineer yang sangat berpengalaman dengan Laravel 12, Inertia.js v2, Vue 3 (Composition API), dan MySQL, 
+serta memahami sistem POS / penjualan eceran toko kain (meter, yard).
+
+Fungsional yang saya inginkan,
+
+UI terbagi menjadi 2 bagian
+1. Produk display (sebelah kiri)
+2. Cart penjualan & Customer
+
+Prodsedur :
+step 1. Saat pertama kali masuk 
+    - bagian 1 menampilkan " Pilih atau Buat Pelanggan ".
+    - bagian 2 menampilkan form 1. Tangal, 2. Pelanggan, 3. marketing dan button simpan.
+        -> untuk field pelanggan dan marketing, berupa field yang di ketik nama 
+           yang akan menampilkan dropdown nama pelanggan atau marketing. 
+           jika tidak ada maka nama tersebut yang akan dipakai.
+    - sistem mencari di tabel penjualan dengan status draff
+
+step 2. input form penjualan di bagian 2
+    -> di step ini kasir input tanggal_transaksi, nama pelanggan dan marketing 
+       atau pilih pelanggan dan marketing di dropdown jika pelanggan sudah ada, 
+    -> simpan ke dalam tabel pelanggan, supplier(status marketing), penjualan status draff fungsi store di transaksi
+step 3. pilih atau cari produk 
+    -> setelah step 2 selesai, UI bagian 1 menampilkan list semua produk dari produk_varian setiap produk hanya tampil
+        nama: varian.produk.nama_produk,
+        warna : varian.nama_varian,
+        qty: varian.detailIsiPaket.qty => (jualnya eceran per meter/yard, tapi untuk menangani kain yang sisa 5 meter
+                tapi pelanggan beli 10 meter, jadi pilih roll 1 5 meter dan pilih roll ke2 5 meter lagi). dan disini 
+                perhitungannya satuan terkecil adalah yard jadi kalau pilih meter konversi ke meter,
+    -> pilih produk di UI bagian 1 dan akan tampil di UI bagian 2 => keranjang.
+    -> tampilnya nama, warna, qty yang mau di beli, harga per meter/yard, subtotal. (disini harga baru di input oleh kasir)
+
+step 4. klik proses pembayaran.
+    -> di step ini UI bagian 1 menampilkan nota,
+    -> di step ini kasir klik PROSES PEMBAYARAN, dimana UI bagian 2 akan berganti menjadi form pembayaran 
+        yang berisi field tanggal_bayar, metode_bayar (CASH, Transfer/EDC, SPLIT, DP.), total_harga, total_bayar, total_akhir.
+        jika pilih selain cash akan muncul, bank_asal, akun_asal, bank_tujuan, ref_pembayaran.
+        tombol PROSES PEMBAYARAN berubah menjadi BAYAR.         
+
+step 5. Print dan selesai
+    -> di step ini setelah kasir klik BAYAR. jika berhasil di UI akan menampilkan tombol print atau kalau bisa langsung print aja
+
+
+tolong buatkan controller dan sempurnakan blade agar mencapai tujuan yang saya maksut di atas.
+dibawah berikut ini. controller, UI yang belum lengkap dan model yang sudah saya buat,  
+
+
+// controller
+
+<?php
+
+namespace App\Http\Controllers\Ecer;
+
+use App\Http\Controllers\Controller;
+use App\Models\Pelanggan;
+use App\Models\Penjualan;
+use App\Models\ProdukVarian;
+use App\Models\Supplier;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+class TransaksiPenjualanEceranController extends Controller
+{
+    public function list()
+    {
+        return inertia('Ecer/Penjualan/List');
+    }
+
+    public function index(Request $request)
+    {
+
+        $penjualan = Penjualan::with([
+            'items.produk_varian.produk',
+            'items.produk_varian.stokFisiks',
+            'pelanggan',
+            'marketing'
+        ])
+            // ->where('user_id', auth()->id())
+            ->where('status_penjualan', 'DRAFT')
+            ->first();
+
+        return inertia('Ecer/Penjualan/Kasir', [
+            'draft' => $penjualan,
+            'pelanggan' => Pelanggan::orderBy('nama')->get(),
+            'marketing' => Supplier::where('status', 'marketing')->get(),
+            'produk' => ProdukVarian::with([
+                'produk',
+                'stokFisiks' => fn($q) => $q->where('total_panjang', '>', 0),
+                'detailIsiPaket.satuan',
+            ])->get(),
+        ]);
+    }
+
+    public function storeDraft(Request $request)
+    {
+        // dd($request);
+        $data = $request->validate([
+            'tanggal_transaksi' => 'required|date',
+            'pelanggan' => 'required|string',
+            'marketing' => 'nullable|string',
+        ]);
+
+        return DB::transaction(function () use ($data) {
+
+            $slugPelanggan = Str::slug($data['pelanggan']);
+
+            $pelanggan = Pelanggan::firstOrCreate(
+                ['slug' => $slugPelanggan],
+                ['nama' => $data['pelanggan']]
+            );
+
+
+            $marketing = null;
+
+            if (!empty($data['marketing'])) {
+                $slugMarketing = Str::slug($data['marketing']);
+
+                $marketing = Supplier::firstOrCreate(
+                    ['slug' => $slugMarketing],
+                    [
+                        'nama' => $data['marketing'],
+                        'status' => 'marketing'
+                    ]
+                );
+            }
+
+
+
+            $penjualan = Penjualan::updateOrCreate(
+                [
+                    'user_id' => Auth::id(),
+                    'status_penjualan' => 'DRAFT',
+                ],
+                [
+                    'nomer_nota' => $this->generateNota(),
+                    'tanggal_transaksi' => $data['tanggal_transaksi'],
+                    'pelanggan_id' => $pelanggan->id,
+                    'marketing_id' => $marketing?->id,
+                    'total_harga' => 0,
+                    'diskon' => 0,
+                    'pajak' => 0,
+                    'biaya_kirim' => 0,
+                    'total_akhir' => 0,
+                    'metode_bayar' => null,
+                ]
+            );
+
+            return redirect()->back()->with('draft_id', $penjualan->id);
+        });
+    }
+
+    protected function generateNota(): string
+    {
+        $prefix = 'INV-' . now()->format('Ym');
+
+        $last = Penjualan::where('nomer_nota', 'like', "$prefix%")
+            ->orderByDesc('id')
+            ->value('nomer_nota');
+
+        $number = $last
+            ? (int) substr($last, -4) + 1
+            : 1;
+
+        return $prefix . '-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+    }
+}
+
+<?php
+
+namespace App\Http\Controllers\Ecer;
+
+use App\Http\Controllers\Controller;
+use App\Models\Penjualan;
+use App\Models\Pembayaran;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class PembayaranEcerController extends Controller
+{
+    public function bayar(Request $request, Penjualan $penjualan)
+    {
+        $data = $request->validate([
+            'tanggal_bayar' => 'required|date',
+            'metode_bayar' => 'required|string',
+            'total_bayar' => 'required|numeric|min:0',
+            'details' => 'array',
+        ]);
+
+        DB::transaction(function () use ($penjualan, $data) {
+
+            $pembayaran = Pembayaran::create([
+                'penjualan_id' => $penjualan->id,
+                'tanggal_bayar' => $data['tanggal_bayar'],
+                'total_bayar' => $data['total_bayar'],
+                'jenis_pembayaran' => $data['metode_bayar'],
+            ]);
+
+            foreach ($data['details'] ?? [] as $detail) {
+                $pembayaran->detail_pembayarans()->create($detail);
+            }
+
+            $penjualan->update([
+                'status_penjualan' => 'PAID',
+                'total_akhir' => $data['total_bayar'],
+            ]);
+        });
+
+        return redirect()->route('ecer.penjualan.print', $penjualan);
+    }
+}
+
+
+// UI Kasir
+<template>
+    <div class="w-full h-screen bg-slate-100 text-slate-800">
+        <!-- HEADER -->
+        <header class="h-10 px-4 flex items-center justify-between bg-white border-b">
+            <Link href="/ecer/penjualan"
+                class="px-3 h-7 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 text-sm transition">
+                Back
+            </Link>
+            <h1 class="font-bold text-sm text-blue-600">POS Penjualan Eceran</h1>
+            <span class="text-xs">{{ today }}</span>
+        </header>
+
+        <div class="grid grid-cols-[65%_35%] h-[calc(100vh-40px)]">
+
+            <!-- ================= LEFT PANEL ================= -->
+            <div class="w-full flex flex-col bg-slate-50">
+                <div class="h-14 bg-white shadow-sm px-4 flex items-center gap-4 border-b">
+                    <div class="relative w-full max-w-md">
+                        <input type="text" placeholder="Cari nama kain atau kode varian..."
+                            class="w-full pl-10 pr-4 py-2 border rounded-full text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                        <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
+                    </div>
+                </div>
+                <div class="w-full h-[calc(100vh-96px)] overflow-y-auto">
+
+                    <!-- STEP 1 -->
+                    <div v-if="step === 1" class="w-full h-full flex items-center justify-center">
+                        <h2 class="text-xl font-bold text-green-800">
+                            Pilih atau Buat Pelanggan >
+                        </h2>
+                    </div>
+
+                    <!-- STEP 3 -->
+                    <div v-if="step >= 3" class=" flex-1  p-6">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div v-for="varian in produk" :key="varian.id" class="bg-white p-4 rounded-lg border">
+                                <h3 class="font-bold text-sm">
+                                    {{ varian.produk.nama_produk }}
+                                </h3>
+                                <p class="text-xs text-slate-500">
+                                    Warna: {{ varian.nama_varian }}
+                                </p>
+
+                                <div class="mt-3 space-y-2">
+                                    <button v-for="roll in varian.detail_isi_paket" :key="roll.id"
+                                        @click="addRoll(varian, roll)"
+                                        class="text-left px-2 py-1 border rounded hover:bg-blue-50">
+                                        <span class="font-mono">
+                                            {{ roll.qty }} {{ roll.satuan.nama_satuan }}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4 -->
+                    <div v-if="step === 4" class="p-6">
+                        <h2 class="font-bold text-lg mb-4">Nota</h2>
+                        <div class="bg-white p-4 border rounded">
+                            <div v-for="item in cart" :key="item.id" class="flex justify-between text-sm">
+                                <span>{{ item.nama }}</span>
+                                <span>{{ format(item.subtotal) }}</span>
+                            </div>
+                            <div class="mt-3 border-t pt-2 font-bold">
+                                Total: {{ format(grandTotal) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT PANEL ================= -->
+            <div class="bg-white border-l flex flex-col relative">
+
+                <!-- STEP 2 : FORM DRAFT -->
+                <div v-if="step === 1" class="p-4 space-y-4">
+                    <h3 class="font-bold">Data Penjualan</h3>
+                    <input type="date" v-model="draftForm.tanggal_transaksi" class="w-full border p-2 rounded">
+
+                    <input v-model="draftForm.pelanggan" list="list-pelanggan" placeholder="Nama Pelanggan"
+                        class="w-full border p-2 rounded">
+                    <datalist id="list-pelanggan">
+                        <option v-for="p in pelanggan" :key="p.id" :value="p.nama"></option>
+                    </datalist>
+
+                    <input v-model="draftForm.marketing" list="list-marketing" placeholder="Penanggungjawab"
+                        class="w-full border p-2 rounded">
+                    <datalist id="list-marketing">
+                        <option v-for="m in marketing" :key="m.id" :value="m.nama"></option>
+                    </datalist>
+
+                    <button @click="submitDraft" class="w-full bg-blue-600 text-white py-2 rounded">SIMPAN</button>
+                </div>
+
+                <!-- STEP 3 : CART -->
+                <div v-if="step === 3" class="w-full h-[calc(100vh-165px)] overflow-y-auto p-4 space-y-3 pt-28">
+
+                    <div class="w-full border-b px-4 text-sm absolute top-0 left-0 py-2 bg-white">
+                        <h3 class="font-bold text-base">Keranjang Belanja</h3>
+                        <div class="grid grid-cols-[30%_5%_1fr]">
+                            <div>Nomer</div>
+                            <div>:</div>
+                            <div>{{ draft.nomer_nota }}</div>
+                        </div>
+                        <div class="grid grid-cols-[30%_5%_1fr]">
+                            <div>Tanggal</div>
+                            <div>:</div>
+                            <div>{{ draft.tanggal_transaksi }}</div>
+                        </div>
+                        <div class="grid grid-cols-[30%_5%_1fr]">
+                            <div>Nama Pelanggan</div>
+                            <div>:</div>
+                            <div>{{ draft.pelanggan.nama }} / Pj : ({{ draft.marketing.nama }})</div>
+                        </div>
+                        <div class="absolute top-6 right-4 space-y-2 flex flex-col">
+                            <button type="button" @click="hapusPenjualan(draft.id)"
+                                class="px-3 py-1 rounded-sm bg-red-500 font-bold text-white cursor-pointer">Ganti</button>
+                            <a href="/ecer/penjualan/transaksi" type="button"
+                                class="px-3 py-1 rounded-sm bg-green-500 font-bold text-white cursor-pointer">Refresh</a>
+                        </div>
+                    </div>
+                    <div v-for="(item, index) in cart" :key="index"
+                        class="border rounded-lg bg-white overflow-hidden shadow-sm border-blue-200">
+                        <div class="bg-blue-50 px-3 py-2 flex justify-between items-center border-b border-blue-100">
+                            <div>
+                                <div class="font-bold text-blue-800 text-sm">{{ item.nama }}</div>
+                                <div class="text-[11px] text-blue-600 font-medium">Warna: {{ item.warna }}</div>
+                            </div>
+                            <button @click="cart.splice(index, 1)" class="text-red-400 hover:text-red-600 text-xs">Hapus
+                                Produk</button>
+                        </div>
+
+                        <div class="p-3 bg-white">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">Harga Per Meter/Yard</label>
+                            <input type="number" v-model="item.harga"
+                                class="w-full border rounded p-1 text-sm font-bold text-blue-700 bg-yellow-50 outline-none focus:border-yellow-400">
+                        </div>
+
+                        <div class="px-3 pb-3 space-y-2">
+                            <div v-for="(roll, rIdx) in item.details" :key="rIdx"
+                                class="flex items-center gap-2 bg-slate-50 p-2 rounded border border-dashed">
+                                <div class="flex-1">
+                                    <div class="text-[10px] text-slate-500 italic">Roll ID: {{ roll.roll_id }}</div>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" v-model="roll.qty" class="w-20 border rounded px-1 text-sm"
+                                            step="0.01">
+                                        <span class="text-xs text-slate-400 font-bold">Yrd</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-[10px] text-slate-400">Subtotal</div>
+                                    <div class="text-xs font-bold">{{ format(roll.qty * item.harga) }}</div>
+                                </div>
+                                <button @click="item.details.splice(rIdx, 1)"
+                                    class="text-slate-300 hover:text-red-500 px-1">✕</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- <div v-for="(item, index) in cart" :key="index" class="border p-3 rounded bg-white shadow-sm ">
+                        <div class="flex justify-between">
+                            <span class="font-bold text-sm text-blue-600">{{ item.nama }}</span>
+                            <button @click="cart.splice(index, 1)" class="text-red-500 text-xs">Hapus</button>
+                        </div>
+                        <div class="text-xs text-slate-500 mb-2">Warna: {{ item.warna }}</div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] text-slate-400 font-bold uppercase">Qty (Meter/Yard)</label>
+                                <input type="number" v-model="item.qty" @input="updateSubtotal(item)"
+                                    class="w-full border p-1 text-sm rounded">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 font-bold uppercase">Harga Satuan</label>
+                                <input type="number" v-model="item.harga" @input="updateSubtotal(item)"
+                                    class="w-full border p-1 text-sm rounded bg-yellow-50">
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-right font-bold text-sm">
+                            Subtotal: {{ format(item.subtotal) }}
+                        </div>
+                    </div> -->
+
+                </div>
+
+                <!-- FOOTER CART -->
+                <div v-if="step === 3" class="p-4 border-t bg-slate-50">
+
+                    <div class="flex justify-between font-bold text-lg mb-3">
+                        <span>Total</span>
+                        <span>{{ format(grandTotal) }}</span>
+                    </div>
+                    <button @click="handleProsesPembayaran"
+                        class="w-full bg-blue-600 text-white py-3 rounded font-bold">
+                        PROSES PEMBAYARAN
+                    </button>
+
+                </div>
+
+                <!-- STEP 4 : PAYMENT -->
+                <div v-if="step === 4" class="p-4 space-y-3">
+                    <h3 class="font-bold">Pembayaran</h3>
+
+                    <input type="date" v-model="payment.tanggal_bayar" class="w-full border p-2 rounded">
+
+                    <select v-model="payment.metode" class="w-full border p-2 rounded">
+                        <option>CASH</option>
+                        <option>TRANSFER</option>
+                        <option>EDC</option>
+                        <option>SPLIT</option>
+                    </select>
+
+                    <input v-model="payment.total_bayar" class="w-full border p-2 rounded" placeholder="Total Bayar">
+
+                    <div v-if="payment.metode !== 'CASH'" class="space-y-2">
+                        <input v-model="payment.bank_asal" placeholder="Bank Asal" class="w-full border p-2 rounded">
+                        <input v-model="payment.ref" placeholder="Ref Pembayaran" class="w-full border p-2 rounded">
+                    </div>
+
+
+                </div>
+
+                <!-- FOOTER CART -->
+                <div v-if="step === 4" class="p-4 border-t bg-slate-50">
+
+                    <button @click="submitPayment" class="w-full bg-green-600 text-white py-2 rounded">
+                        BAYAR
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue'
+import { Link, router } from '@inertiajs/vue3'
+import AuthLayout from '../../../Layouts/AuthLayout.vue';
+
+defineOptions({ layout: AuthLayout })
+
+const props = defineProps({
+    draft: Object,
+    pelanggan: Array,
+    marketing: Array,
+    produk: Array,
+})
+
+const today = new Date().toLocaleDateString('id-ID')
+
+const step = ref(props.draft ? 3 : 1)
+const selectedRoll = ref(null);
+const inputHarga = ref(0);
+
+const draftForm = ref({
+    tanggal_transaksi: new Date().toISOString().slice(0, 10),
+    pelanggan: '',
+    marketing: '',
+})
+
+const payment = ref({
+    tanggal_bayar: new Date().toISOString().slice(0, 10),
+    metode: 'CASH',
+    total_bayar: 0,
+    bank_asal: '',
+    ref: '',
+})
+
+const submitDraft = () => {
+    router.post('/ecer/penjualan/transaksi/draft', draftForm.value, {
+        onSuccess: () => step.value = 3
+    })
+}
+
+// Di dalam script setup Anda
+
+const hapusPenjualan = (id) => {
+    if (confirm('Apakah Anda yakin ingin membatalkan transaksi ini dan memulai dari awal?')) {
+        router.delete(`/ecer/penjualan/transaksi/${id}`, {
+            onSuccess: () => {
+                // Reset state ke awal
+                step.value = 1;
+                cart.value = [];
+                draftForm.value = {
+                    tanggal_transaksi: new Date().toISOString().slice(0, 10),
+                    pelanggan: '',
+                    marketing: '',
+                };
+            }
+        });
+    }
+}
+
+const cart = ref([]);
+
+const addRoll = (varian, roll) => {
+    // 1. Cari apakah Varian (Produk + Warna) ini sudah ada di keranjang?
+    let itemProduk = cart.value.find(item => item.variant_id === varian.id);
+
+    if (itemProduk) {
+        // 2. Jika Varian sudah ada, cek apakah Roll ini sudah dimasukkan?
+        const isRollExist = itemProduk.details.find(d => d.roll_id === roll.id);
+
+        if (!isRollExist) {
+            // Tambahkan roll ke dalam list details varian tersebut
+            itemProduk.details.push({
+                roll_id: roll.id,
+                nomor_batch: roll.items_details?.nomor_batch || 'N/A', // contoh ambil dr StokFisik
+                qty: roll.qty, // panjang asli roll
+                subtotal: roll.qty * itemProduk.harga // subtotal per roll
+            });
+        }
+    } else {
+        // 3. Jika Varian belum ada, buat entry baru
+        cart.value.push({
+            variant_id: varian.id,
+            nama: varian.produk.nama_produk,
+            warna: varian.nama_varian,
+            harga: varian.harga_jual || 0, // harga default
+            details: [{
+                roll_id: roll.id,
+                nomor_batch: roll.items_details?.nomor_batch || 'N/A',
+                qty: roll.qty,
+                subtotal: 0
+            }]
+        });
+    }
+};
+
+const updateSubtotal = (item) => {
+    item.subtotal = item.qty * item.harga
+}
+
+const grandTotal = computed(() => {
+    return cart.value.reduce((total, item) => total + (item.qty * item.harga), 0)
+})
+
+const handleProsesPembayaran = () => {
+    if (cart.value.length === 0) return alert("Keranjang masih kosong")
+
+    router.post('/ecer/penjualan/transaksi/item', {
+        penjualan_id: props.draft.id,
+        items: cart.value
+    }, {
+        onSuccess: () => step.value = 4 
+    })
+}
+
+
+
+const submitPayment = () => {
+    router.post(`/ecer/penjualan/${props.draft.id}/bayar`, payment.value, {
+        onSuccess: () => {
+            alert('Pembayaran Berhasil!');
+            window.print();
+        }
+    });
+};
+
+
+const format = (n) =>
+    new Intl.NumberFormat('id-ID').format(n)
+
+
+</script>
+
+<style scoped>
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+</style>
+
+
+// Models
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Penjualan extends Model
+{
+    protected $fillable = [
+        'nomer_nota',
+        'tanggal_transaksi',
+        'pelanggan_id',
+        'user_id',
+        'marketing_id',
+        'total_harga',
+        'diskon',
+        'pajak',
+        'biaya_kirim',
+        'total_akhir',
+        'metode_bayar',
+        'status_penjualan',
+    ];
+
+    public function items()
+    {
+        return $this->hasMany(ItemPenjualan::class, 'penjualan_id');
+    }
+
+    public function pembayaran()
+    {
+        return $this->hasOne(Pembayaran::class, 'penjualan_id');
+    }
+
+    public function pelanggan()
+    {
+        return $this->belongsTo(Pelanggan::class, 'pelanggan_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function marketing()
+    {
+        return $this->belongsTo(Supplier::class, 'marketing_id');
+    }
+}
+
+// model ItemPenjualan
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ItemPenjualan extends Model
+{
+    protected $fillable = [
+        'penjualan_id',
+        'produk_varian_id',
+        'satuan_id',
+        'qty',
+        'harga_satuan',
+        'subtotal',
+        'diskon_item',
+    ];
+
+    public function penjualan()
+    {
+        return $this->belongsTo(Penjualan::class, 'penjualan_id');
+    }
+
+    public function produk_varian()
+    {
+        return $this->belongsTo(ProdukVarian::class, 'produk_varian_id');
+    }
+
+    public function satuan()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_id');
+    }
+}
+
+// model DetailPenjualan
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class DetailPenjualan extends Model
+{
+    protected $fillable = [
+        'item_penjualan_id',
+        'varian_id',
+        'satuan_id',
+        'qty',
+        'status',
+    ];
+
+    public function produk_varian()
+    {
+        return $this->belongsTo(ProdukVarian::class, 'varian_id');
+    }
+
+    public function itemsPenjualan()
+    {
+        return $this->belongsTo(ItemPenjualan::class, 'item_penjualan_id');
+    }
+
+    public function satuan()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_id');
+    }
+}
+
+// Model Pembayaran
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Pembayaran extends Model
+{
+    protected $fillable = [
+        'penjualan_id',
+        'nomer_pembayaran',
+        'tanggal_bayar',
+        'total_bayar',
+        'jenis_pembayaran',
+        'keterangan',
+        'is_dp',
+    ];
+
+    public function penjualan()
+    {
+        return $this->belongsTo(Penjualan::class, 'penjualan_id');
+    }
+
+    public function detail_pembayarans()
+    {
+        return $this->hasMany(PembayaranDetails::class, 'pembayaran_id');
+    }
+}
+
+// model PembayaranDetails
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class PembayaranDetails extends Model
+{
+    protected $fillable = [
+        'pembayaran_id',
+        'bank_asal',
+        'akun_asal',
+        'bank_tujuan',
+        'metode_bayar',
+        'status',
+        'ref_pembayaran',
+        'nominal',
+    ];
+
+    public function pembayaran()
+    {
+        return $this->belongsTo(Pembayaran::class, 'pembayaran_id');
+    }
+}
+
+
+// model ProdukVarian 
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ProdukVarian extends Model
+{
+    protected $fillable = [
+        'produk_id',
+        'gudang_id',
+        'nama_varian',
+        'tipe',
+        'panjang',
+        'tinggi',
+        'lebar',
+        'tebal',
+        'sku',
+        'is_paket',
+        'harga_beli',
+        'harga_jual',
+    ];
+
+    public function produk()
+    {
+        return $this->belongsTo(Produk::class, 'produk_id');
+    }
+    public function stokFisiks()
+    {
+        return $this->hasMany(StokFisik::class, 'varian_id');
+    }
+    public function detailIsiPaket()
+    {
+        return $this->hasMany(DetailPaket::class, 'induk_varian_id');
+    }
+    public function konversi()
+    {
+        return $this->hasMany(KonversiSatuan::class, 'satuan_id');
+    }
+    public function pembelianItem()
+    {
+        return $this->hasOne(PembelianItems::class, 'varian_id');
+    }
+}
+
+
+// model DetailPaket
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class DetailPaket extends Model
+{
+    protected $fillable = [
+        'induk_varian_id',
+        'anak_varian_id',
+        'satuan_id',
+        'qty',
+        'isi_2',
+        'status',
+    ];
+
+    public function produkVarian()
+    {
+        return $this->belongsTo(ProdukVarian::class, 'induk_varian_id');
+    }
+    public function itemsDetails()
+    {
+        return $this->belongsTo(StokFisik::class, 'anak_varian_id');
+    }
+}
+
+
+// model StokFisik
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class StokFisik extends Model
+{
+    protected $table = 'stok_fisiks';
+
+    protected $fillable = [
+        'varian_id',
+        'gudang_id',
+        'nomor_batch',
+        'tanggal_kadaluarsa',
+        'total_panjang',
+        'total_qty',
+        'harga_jual',
+        'harga_beli',
+    ];
+
+    public function varian()
+    {
+        return $this->belongsTo(ProdukVarian::class, 'varian_id');
+    }
+
+    public function gudang()
+    {
+        return $this->belongsTo(Gudang::class, 'gudang_id');
+    }
+
+    public function detailPakets()
+    {
+        return $this->HasMany(DetailPaket::class, 'anak_varian_id');
+    }
+}
+

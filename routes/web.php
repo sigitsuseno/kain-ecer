@@ -1,11 +1,16 @@
 <?php
 
 use App\Http\Controllers\Ecer\EcerController;
+use App\Http\Controllers\Ecer\PembayaranEcerController;
+use App\Http\Controllers\Ecer\PenjualanEcerController;
 use App\Http\Controllers\Ecer\ProdukEcerController;
+use App\Http\Controllers\Ecer\TransaksiPenjualanEceranController;
 use App\Http\Controllers\Grosir\PenerimaanController;
 use App\Models\Penerimaan;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+
 
 Route::get('/', function () {
     return inertia('Home');
@@ -85,8 +90,6 @@ Route::prefix('ecer')
     ->middleware(['auth', 'role:admin-ecer'])
     ->group(function () {
         Route::get('/', [EcerController::class, 'index'])->name('index');
-
-
         Route::prefix('produks')
             ->name('produks.')
             ->controller(ProdukEcerController::class)
@@ -97,7 +100,6 @@ Route::prefix('ecer')
                 Route::delete('/{produk}', 'destroy')->name('destroy');
                 Route::get('/colors', 'colorsByName')->name('colors');
             });
-
         Route::prefix('categories')
             ->name('categories.')
             ->controller(\App\Http\Controllers\Master\CategoryController::class)
@@ -132,6 +134,34 @@ Route::prefix('ecer')
                 Route::post('/', 'store')->name('store');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
+            });
+
+        Route::prefix('penjualan')
+            ->name('penjualan.')
+            ->controller(PenjualanEcerController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+
+
+                Route::prefix('transaksi')
+                    ->name('transaksi.')
+                    ->controller(TransaksiPenjualanEceranController::class)
+                    ->group(function () {
+                        Route::get('/', 'index')->name('index');
+                        Route::get('/list', 'list')->name('list');
+                        Route::post('/draft', 'storeDraft')->name('draft');
+                        Route::post('/item', 'simpanItems')->name('item');
+                        Route::delete('/{id}', 'hapusPenjualan')->name('hapus');
+                    });
+
+                Route::prefix('pembayaran')
+                    ->name('pembayaran.')
+                    ->controller(PembayaranEcerController::class)
+                    ->group(function () {
+                        Route::get('/', 'index')->name('list-pembayaran');
+                        Route::get('/{id}', 'preparePembayaran')->name('prepare');
+                        Route::post('/{penjualan}/bayar', 'bayar')->name('bayar');
+                    });
             });
     });
 

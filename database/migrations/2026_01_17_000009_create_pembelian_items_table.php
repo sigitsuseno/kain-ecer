@@ -14,8 +14,11 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger("pembelian_id")->nullable();
             $table->unsignedBigInteger("varian_id")->nullable();
-            $table->bigInteger("total_panjang")->nullable();
-            $table->bigInteger("total_qty")->nullable();
+            $table->unsignedBigInteger("satuan_id")->nullable();
+            $table->decimal("total_qty")->nullable();
+            $table->decimal("total_jumlah")->nullable();
+            $table->decimal("harga_beli")->nullable();
+            $table->decimal("subtotal")->nullable();
             $table->timestamps();
         });
     }
