@@ -75,6 +75,7 @@
                                 class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
                                 BAYAR
                             </Link>
+
                         </div>
                     </div>
 

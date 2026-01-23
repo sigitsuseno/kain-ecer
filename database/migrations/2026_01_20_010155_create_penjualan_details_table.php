@@ -16,6 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('penjualan_item_id');
             $table->unsignedBigInteger('satuan_id')->nullable();
             $table->decimal('qty', 19, 2)->default(0);
+            $table->decimal('harga', 19, 2)->default(0);
+            $table->decimal('jumlah_harga', 19, 2)->default(0);
             $table->string('status')->default('prepare');
             $table->timestamps();
         });

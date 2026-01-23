@@ -135,7 +135,7 @@
                                     <input type="number" v-model="roll.qty" :disabled="roll.satuan_beli === 'Kg'"
                                         class="w-20 border rounded px-1 text-sm font-bold" step="0.01">
 
-                                    <select v-model="roll.satuan_beli" @change="updateKoefisien(roll)"
+                                    <select v-model="roll.satuan_beli" @change="updateQtyBerdasarkanSatuan(roll)"
                                         class="text-xs border rounded bg-white p-1">
                                         <option value="Yard">Yard</option>
                                         <option value="Meter">Meter</option>
@@ -144,14 +144,18 @@
                                 </div>
 
                                 <div class="text-right">
+                                    <div v-if="roll.satuan_stok !== roll.satuan_beli"
+                                        class="text-[9px] text-red-500 italic">
+                                        Harga Penyesuaian: {{ format(item.harga / roll.koefisien) }}/{{ roll.satuan_beli
+                                        }}
+                                    </div>
                                     <div class="text-[10px] text-slate-400">Subtotal</div>
                                     <div class="text-xs font-bold text-blue-600">
-                                        <span v-if="roll.koefisien !== 1"
-                                            class="text-[9px] text-slate-400 block font-normal">
-                                            (Konversi: {{ (roll.qty * roll.koefisien).toFixed(2) }})
-                                        </span>
-                                        {{ format(roll.qty * roll.koefisien * item.harga) }}
+                                        {{ format(roll.qty * (item.harga / roll.koefisien)) }}
                                     </div>
+                                    <span v-if="roll.qty > getMaxQty(roll)" class="text-[9px] text-red-600 font-bold">
+                                        ⚠ Melebihi stok (Maks: {{ getMaxQty(roll) }} {{ roll.satuan_beli }})
+                                    </span>
                                 </div>
                                 <button @click="item.details.splice(rIdx, 1)"
                                     class="text-slate-300 hover:text-red-500 px-1 font-bold">✕</button>
@@ -207,29 +211,73 @@ const payment = ref({
     ref: '',
 })
 
-// Fungsi untuk update koefisien saat select satuan berubah
-const updateKoefisien = (roll) => {
-    // Jika stok YARD mau dikonversi ke METER
+// 1. Fungsi Konversi (Update Qty Langsung)
+const updateQtyBerdasarkanSatuan = (roll) => {
+    const asal = roll.qty_stok;
+
     if (roll.satuan_stok === 'Yard' && roll.satuan_beli === 'Meter') {
-        // Angka qty yard dikali 0.9144 untuk jadi meter
+        // Yard ke Meter: Qty mengecil (x 0.9144), maka Harga harus membesar (/ 0.9144)
+        roll.qty = parseFloat((asal * 0.9144).toFixed(2));
         roll.koefisien = 0.9144;
     }
-    // Jika stok METER mau dikonversi ke YARD
     else if (roll.satuan_stok === 'Meter' && roll.satuan_beli === 'Yard') {
-        // Angka qty meter dikali 1.09361 untuk jadi yard
-        roll.koefisien = 1.09361;
+        // Meter ke Yard: Qty membesar (x 1.0936), maka Harga harus mengecil (/ 1.0936)
+        roll.qty = parseFloat((asal * 1.0936).toFixed(2));
+        roll.koefisien = 1.0936;
     }
     else {
+        roll.qty = asal;
         roll.koefisien = 1;
     }
-}
+};
+const roundUp500 = (amount) => {
+    // Angka asli / 500, lalu bulatkan ke atas, lalu kali 500 lagi
+    return Math.ceil(amount / 500) * 500;
+};
 
 const calculateItemTotal = (item) => {
-    return item.details.reduce((sum, roll) => {
-        // Rumus: Qty * Koefisien * Harga
-        return sum + (roll.qty * roll.koefisien * item.harga);
+    const totalUangAsli = item.details.reduce((sum, roll) => {
+        const hargaKonversi = item.harga / (roll.koefisien || 1);
+        return sum + (roll.qty * hargaKonversi);
     }, 0);
+
+    // Terapkan pembulatan 500 ke atas
+    return roundUp500(totalUangAsli);
 }
+
+// 3. Fungsi Tambah ke Keranjang
+const addRoll = (varian, roll) => {
+    let itemProduk = cart.value.find(item => item.variant_id === varian.id);
+    const namaSatuanStok = roll.satuan?.nama_satuan || 'Yard';
+    const qtyAwal = parseFloat(roll.qty);
+
+    const detailBaru = {
+        roll_id: roll.id,
+        qty: qtyAwal,
+        qty_stok: qtyAwal,
+        satuan_id: roll.satuan_id,
+        satuan_stok: namaSatuanStok,
+        satuan_beli: namaSatuanStok,
+        koefisien: 1 // Tambahkan ini agar tidak undefined saat pertama kali masuk
+    };
+
+    if (itemProduk) {
+        const isRollExist = itemProduk.details.find(d => d.roll_id === roll.id);
+        if (!isRollExist) {
+            itemProduk.details.push(detailBaru);
+        } else {
+            alert('Roll ini sudah ada di keranjang');
+        }
+    } else {
+        cart.value.push({
+            variant_id: varian.id,
+            nama: varian.produk.nama_produk || varian.produk.nama,
+            warna: varian.nama_varian || varian.nama,
+            harga: varian.harga_jual || 0,
+            details: [detailBaru]
+        });
+    }
+};
 
 // Fungsi hitung grand total keseluruhan (dari nested cart)
 const grandTotal = computed(() => {
@@ -257,77 +305,6 @@ const hapusPenjualan = (id) => {
         });
     }
 }
-const addRoll = (varian, roll) => {
-    let itemProduk = cart.value.find(item => item.variant_id === varian.id);
-
-    // Ambil nama satuan untuk pengecekan (misal: "Yard")
-    const namaSatuanStok = roll.satuan?.nama_satuan || 'Yard';
-
-    if (itemProduk) {
-        const isRollExist = itemProduk.details.find(d => d.roll_id === roll.id);
-        if (!isRollExist) {
-            itemProduk.details.push({
-                roll_id: roll.id,
-                qty: parseFloat(roll.qty),
-                satuan_id: roll.satuan_id,
-                satuan_stok: namaSatuanStok, // Satuan asli di gudang
-                satuan_beli: namaSatuanStok, // Default satuan beli sama dengan stok
-                koefisien: 1 // Default 1 (tanpa konversi)
-            });
-        } else {
-            alert('Roll ini sudah ada di keranjang');
-        }
-    } else {
-        cart.value.push({
-            variant_id: varian.id,
-            nama: varian.produk.nama,
-            warna: varian.nama,
-            harga: varian.harga_jual || 0,
-            details: [{
-                roll_id: roll.id,
-                qty: parseFloat(roll.qty),
-                satuan_id: roll.satuan_id,
-                satuan_stok: namaSatuanStok,
-                satuan_beli: namaSatuanStok,
-                koefisien: 1
-            }]
-        });
-    }
-};
-
-// const addRoll = (varian, roll) => {
-//     let itemProduk = cart.value.find(item => item.variant_id === varian.id);
-
-//     if (itemProduk) {
-//         const isRollExist = itemProduk.details.find(d => d.roll_id === roll.id);
-//         console.log(isRollExist);
-
-//         if (!isRollExist) {
-//             itemProduk.details.push({
-//                 roll_id: roll.id,
-//                 nomor_batch: roll.items_details?.nomor_batch || 'N/A',
-//                 qty: parseFloat(roll.qty),
-//                 satuan_id: roll.satuan_id,
-//             });
-//         } else {
-//             alert('Roll ini sudah ada di keranjang');
-//         }
-//     } else {
-//         cart.value.push({
-//             satuan_id: varian.produk.satuan_id,
-//             variant_id: varian.id,
-//             nama: varian.produk.nama_produk,
-//             warna: varian.nama_varian,
-//             harga: varian.harga_jual || 0,
-//             details: [{
-//                 roll_id: roll.id,
-//                 nomor_batch: roll.items_details?.nomor_batch || 'N/A',
-//                 qty: parseFloat(roll.qty),
-//                 satuan_id: roll.satuan_id,
-//             }]
-//         });
-//     }
-// };
 
 const handleProsesPembayaran = () => {
     if (cart.value.length === 0) return alert("Keranjang masih kosong")
@@ -339,10 +316,29 @@ const handleProsesPembayaran = () => {
         penjualan_id: props.draft.id,
         items: cart.value
     }, {
-        onSuccess: () => step.value = 4
-    })
-}
 
+        onError: (errors) => {
+            if (errors.cart) {
+                alert("Gagal Memproses: " + errors.cart);
+            } else {
+                alert("Terjadi kesalahan sistem, silakan cek inputan Anda.");
+            }
+        },
+        onSuccess: () => {
+            step.value = 4;
+        }
+    });
+}
+const getMaxQty = (roll) => {
+    // Menghitung batas input berdasarkan satuan yang dipilih
+    if (roll.satuan_beli === 'Meter' && roll.satuan_stok === 'Yard') {
+        return parseFloat((roll.qty_stok * 0.9144).toFixed(2));
+    }
+    if (roll.satuan_beli === 'Yard' && roll.satuan_stok === 'Meter') {
+        return parseFloat((roll.qty_stok * 1.0936).toFixed(2));
+    }
+    return roll.qty_stok;
+};
 
 
 const format = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)

@@ -6,9 +6,11 @@ use App\Http\Controllers\Ecer\PenjualanEcerController;
 use App\Http\Controllers\Ecer\ProdukEcerController;
 use App\Http\Controllers\Ecer\TransaksiPenjualanEceranController;
 use App\Http\Controllers\Grosir\PenerimaanController;
+use App\Http\Controllers\PrintController;
 use App\Models\Penerimaan;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
 
 
 
@@ -23,6 +25,9 @@ Route::prefix('auth')
         Route::post('/login', 'login')->name('attempt')->middleware('guest');
         Route::post('/logout', 'logout')->name('logout')->middleware('auth');
     });
+
+Route::post('/print-thermal', [PrintController::class, 'print'])
+    ->name('print-thermal');
 
 Route::prefix('dashboard')
     ->name('dashboard.')
@@ -161,6 +166,7 @@ Route::prefix('ecer')
                         Route::get('/', 'index')->name('list-pembayaran');
                         Route::get('/{id}', 'preparePembayaran')->name('prepare');
                         Route::post('/{penjualan}/bayar', 'bayar')->name('bayar');
+                        Route::get('/print/{id}', 'showPrint')->name('print');
                     });
             });
     });

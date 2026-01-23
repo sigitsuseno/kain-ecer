@@ -1,22 +1,6 @@
-// logika bisnis
-
-disini adalah tahap pembayaran yang mendapatkan data dari tabel penjualan -> item_penjualan -> detail_penjualan.
-
-dimana pembayaran ini ada 5 mode pembayaran yaitu CASH, TRANSFER, EDC, SPLIT, DP.
-1. CASH
-    - field yang di butuhkan = Tanggal, Metode, Ongkir (bila ada), Diskon (bila ada), nominal bayar, kembalian.
-2. TRANSFER dan EDC
-     - field yang di butuhkan = Tanggal, Metode, bank_asal, bank_tujuan, Ongkir (bila ada), Diskon (bila ada), nominal bayar, kembalian.
-3. SPLIT
-     - field yang di butuhkan = Tanggal, Metode, bank_asal, bank_tujuan, Ongkir (bila ada), Diskon (bila ada), nominal bayar 1, nominal bayar 2 dst, kembalian.
-2. DP
-     - field yang di butuhkan = Tanggal, Metode, bank_asal, bank_tujuan, Ongkir (bila ada), Diskon (bila ada), nominal bayar, Kurang Bayar.
-
-
-// frontend
 <template>
-    <div class="w-full h-screen bg-slate-100 text-slate-800">
-        <header class="h-10 px-4 flex items-center justify-between bg-white border-b">
+    <div id="forOffset" class="w-full h-screen bg-slate-100 text-slate-800">
+        <header class="h-10 px-4 flex items-center justify-between bg-white border-b print:hidden">
             <Link href="/ecer/penjualan/transaksi/list"
                 class="px-3 h-7 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 text-sm transition">
                 Back
@@ -25,134 +9,197 @@ dimana pembayaran ini ada 5 mode pembayaran yaitu CASH, TRANSFER, EDC, SPLIT, DP
             <span class="text-xs">{{ today }}</span>
         </header>
 
-        <div class="grid grid-cols-[65%_35%] h-[calc(100vh-40px)]">
+        <div class="grid grid-cols-[65%_35%] h-[calc(100vh-40px)] print:block">
+            <div class="w-full flex flex-col bg-slate-100 relative print:bg-white">
+                <div class="absolute top-0 right-0 p-2 z-10 print:hidden">
+                    <OffsetPanel>
+                        <div class="p-4">
+                            <h3 class="font-bold mb-2">Informasi Tambahan</h3>
+                            <p class="text-sm italic text-slate-500">Gunakan panel ini untuk catatan internal atau
+                                detail pengiriman jika diperlukan.</p>
+                        </div>
+                    </OffsetPanel>
+                </div>
 
-            <div class="w-full flex flex-col bg-slate-50">
-                <div class="flex items-center justify-center">
-                    <h2 class="font-bold text-lg mb-4">Nota</h2>
-                    <div id="printable-receipt" class="print-only receipt-container">
-                        <div class="receipt-header">
-                            <h2 class="store-name">NAMA TOKO ANDA</h2>
-                            <p>Jl. Tekstil No. 123, Kota A</p>
-                            <p>Telp: 0812-3456-7890</p>
+                <div class="flex flex-col items-center justify-center py-10 print:py-0 overflow-y-auto">
+                    <h2 class="font-bold text-lg mb-4 print:hidden">Pratinjau Nota</h2>
+
+                    <div id="printable-receipt" class="w-[80mm] shadow bg-[#ffffff] p-4 print:shadow-none print:p-0">
+                        <div class="receipt-header text-sm border-b border-dashed pb-2 text-center">
+                            <h2 class="store-name font-bold text-base">TOKO KAIN ECER</h2>
+                            <p>Jl. Tekstil Utama No. 88, Semarang</p>
+                            <p>Telp: 024-12345678</p>
                         </div>
 
-                        <div class="receipt-divider">--------------------------------</div>
-
-                        <div class="receipt-info">
-                            <p>Nota: </p>
-                            <p>Tgl : </p>
-                            <p>Plg : </p>
+                        <div class="receipt-info text-xs grid grid-cols-[30%_5%_1fr] py-2 border-b border-dashed">
+                            <span>Nota</span><span>:</span><span>{{ penjualan.nomer }}</span>
+                            <span>Tanggal</span><span>:</span><span>{{ penjualan.tanggal_indo }}</span>
+                            <span>Pelanggan</span><span>:</span><span>{{ penjualan.pelanggan?.nama || 'Umum' }}</span>
+                            <span>PJ</span><span>:</span><span>{{ penjualan.marketing?.nama || '-' }}</span>
                         </div>
 
-                        <div class="receipt-divider">--------------------------------</div>
-
-                        <div class="receipt-items">
-                            <div v-for="item in cart" :key="item.variant_id" class="receipt-item-group">
-                                <div class="item-main">
-                                    <span class="item-name"></span>
-                                </div>
-                                <div class="item-detail">
-                                    <span>Roll Yrd x
-                                    </span>
-                                    <span></span>
+                        <div class="receipt-items py-2 border-b border-dashed">
+                            <div v-for="item in penjualan.items" :key="item.id" class="mb-2">
+                                <div class="item-name text-xs font-bold uppercase">{{ item.varian?.produk?.nama }}</div>
+                                <div class="grid grid-cols-[40%_1fr_25%] text-xs" v-for="dtp in item.details"
+                                    :key="dtp.id">
+                                    <div class="truncate">{{ item.varian?.nama }}</div>
+                                    <div class="text-center text-[10px]">{{ dtp.qty }} {{ dtp.satuan.inisial }} x {{
+                                        formatNumber(dtp.harga) }}</div>
+                                    <div class="text-end">{{ formatNumber(dtp.jumlah_harga) }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="receipt-divider">--------------------------------</div>
-
-                        <div class="receipt-total">
-                            <div class="total-row">
+                        <div class="receipt-total py-2 space-y-1 text-sm font-bold font-mono">
+                            <div class="total-row flex justify-between">
                                 <span>TOTAL</span>
-                                <span></span>
+                                <span>{{ formatNumber(totalKeseluruhan) }}</span>
                             </div>
-                            <div class="total-row">
-                                <span>BAYAR</span>
-                                <span></span>
+                            <div class="total-row flex justify-between text-xs font-normal italic">
+                                <span>Ongkir/Diskon</span>
+                                <span>{{ formatNumber(ongkir) }} / -{{ formatNumber(diskon) }}</span>
                             </div>
-                            <div class="total-row">
+                            <div class="total-row flex justify-between text-xs">
+                                <span>BAYAR ({{ payment.metode }})</span>
+                                <span>{{ formatNumber(payment.total_bayar + (payment.metode === 'SPLIT' ?
+                                    payment.nominal2 : 0)) }}</span>
+                            </div>
+                            <div class="total-row flex justify-between border-t border-dashed pt-1 text-base">
                                 <span>KEMBALI</span>
-                                <span></span>
+                                <span>{{ formatNumber(kembalian) }}</span>
                             </div>
                         </div>
 
-                        <div class="receipt-footer">
-                            <p>Terima Kasih</p>
+                        <div class="receipt-footer text-center mt-6 text-[9px] uppercase leading-tight">
+                            <p>*** Terima Kasih ***</p>
                             <p>Barang yang sudah dipotong</p>
-                            <p>tidak dapat dikembalikan.</p>
+                            <p>tidak dapat dikembalikan / ditukar.</p>
+                            <p class="mt-2 font-mono italic">{{ today }} {{ new Date().toLocaleTimeString() }}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white border-l flex flex-col relative">
-                <div class="w-full h-[calc(100vh-165px)] overflow-y-auto p-4 space-y-3 ">
-                    <div class="p-4 space-y-3">
-                        <h3 class="font-bold border-b pb-2">Pembayaran</h3>
+            <div class="bg-white border-l flex flex-col relative print:hidden">
+                <div class="w-full h-[calc(100vh-210px)] overflow-y-auto p-4 space-y-4">
+                    <h3 class="font-bold border-b pb-2 text-slate-600 flex items-center gap-2">
+                        <span class="w-2 h-5 bg-blue-600 rounded-full"></span>
+                        Panel Pembayaran
+                    </h3>
 
-                        <div class="grid grid-cols-[25%_1fr] items-center">
-                            <label class="text-xs text-slate-700 font-bold">TANGGAL BAYAR</label>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-[35%_1fr] items-center gap-2">
+                            <label class="text-[10px] text-slate-500 font-bold uppercase">Tanggal Bayar</label>
                             <input type="date" v-model="payment.tanggal_bayar"
-                                class=" w-full h-10 outline-none rounded-sm ring px-3">
+                                class="w-full h-10 outline-none rounded border border-slate-200 focus:border-blue-500 px-3 text-sm">
                         </div>
 
-                        <div class="grid grid-cols-[25%_1fr] items-center">
-                            <label class="text-xs text-slate-700 font-bold">METODE</label>
-                            <select v-model="payment.metode" class="   w-full h-10 outline-none rounded-sm ring px-3">
-                                <option value="CASH">CASH</option>
-                                <option value="TRANSFER">TRANSFER</option>
-                                <option value="EDC">EDC</option>
-                                <option value="SPLIT">SPLIT</option>
-                                <option value="DP">DP</option>
+                        <div class="grid grid-cols-[35%_1fr] items-center gap-2">
+                            <label class="text-[10px] text-slate-500 font-bold uppercase">Metode</label>
+                            <select v-model="payment.metode"
+                                class="w-full h-10 outline-none rounded border border-slate-200 focus:border-blue-500 px-3 text-sm font-bold bg-white">
+                                <option value="CASH">CASH (TUNAI)</option>
+                                <option value="TRANSFER">TRANSFER BANK</option>
+                                <option value="EDC">MESIN EDC</option>
+                                <option value="SPLIT">SPLIT PAYMENT</option>
+                                <option value="DP">DOWN PAYMENT</option>
                             </select>
                         </div>
 
-                        <div v-if="payment.metode !== 'CASH'" class="space-y-3 bg-slate-50 p-3 rounded border">
-                            <div class="grid grid-cols-[25%_1fr] items-center">
-                                <label class="text-xs text-slate-700 font-bold">BANK ASAL / AKUN</label>
-                                <input v-model="payment.bank_asal" placeholder="Contoh: BCA - 123456"
-                                    class="w-full h-10 outline-none rounded-sm ring px-3">
-                            </div>
-                            <div class="grid grid-cols-[25%_1fr] items-center">
-                                <label class="text-xs text-slate-700 font-bold">NO. REF / TRACE</label>
-                                <input v-model="payment.ref" placeholder="No Referensi"
-                                    class="w-full h-10 outline-none rounded-sm ring px-3">
-                            </div>
-                            <div class="grid grid-cols-[25%_1fr] items-center">
-                                <label class="text-xs text-slate-700 font-bold">BANK TUJUAN</label>
-                                <input v-model="payment.bank_tujuan" placeholder="Bank Tujuan"
-                                    class="w-full h-10 outline-none rounded-sm ring px-3">
-                            </div>
+                        <div v-if="['TRANSFER', 'EDC', 'DP'].includes(payment.metode)"
+                            class="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                            <input v-model="payment.bank_asal" placeholder="Bank Asal (Contoh: BCA)"
+                                class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
+                            <input v-model="payment.bank_tujuan" placeholder="Ke Bank Mana? (Contoh: Mandiri Toko)"
+                                class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
+                            <input v-model="payment.ref" placeholder="No. Ref / Kode Trace"
+                                class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
                         </div>
 
-                        <div class="grid grid-cols-[25%_1fr] items-center">
-                            <label class="text-xs text-slate-700 font-bold uppercase">Ongkir</label>
-                            <input type="text" v-model="ongkir"
-                                class="w-full h-10 outline-none rounded-sm ring px-3 font-bold text-green-700 text-lg">
+                        <div class="grid grid-cols-[35%_1fr] items-center gap-2 pt-2 border-t">
+                            <label class="text-[10px] text-slate-500 font-bold uppercase">Ongkos Kirim</label>
+                            <input type="number" v-model.number="ongkir"
+                                class="w-full h-10 outline-none rounded border border-slate-200 px-3 font-bold text-blue-700">
                         </div>
-                        <div class="grid grid-cols-[25%_1fr] items-center">
-                            <label class="text-xs text-slate-700 font-bold uppercase">Diskon</label>
-                            <input type="text" v-model="diskon"
-                                class="w-full h-10 outline-none rounded-sm ring px-3 font-bold text-green-700 text-lg">
-                        </div>
-                        <div class="grid grid-cols-[25%_1fr] items-center">
-                            <label class="text-xs text-slate-700 font-bold uppercase">Nominal Bayar</label>
-                            <input type="text" v-model="payment.total_bayar"
-                                class="w-full h-10 outline-none rounded-sm ring px-3 font-bold text-green-700 text-lg">
+                        <div class="grid grid-cols-[35%_1fr] items-center gap-2">
+                            <label class="text-[10px] text-slate-500 font-bold uppercase">Diskon Nota</label>
+                            <input type="number" v-model.number="diskon"
+                                class="w-full h-10 outline-none rounded border border-slate-200 px-3 font-bold text-red-600">
                         </div>
 
+                        <div v-if="payment.metode !== 'SPLIT'" class="grid grid-cols-[35%_1fr] items-center gap-2 mt-4">
+                            <label class="text-[10px] text-blue-800 font-bold uppercase">Nominal Bayar</label>
+                            <input type="number" v-model.number="payment.total_bayar"
+                                class="w-full h-12 outline-none rounded border-2 border-blue-500 px-3 font-bold text-green-700 text-xl shadow-sm">
+                        </div>
+
+                        <div v-else class="space-y-4 pt-2">
+                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-200 space-y-2">
+                                <label class="text-[10px] font-bold text-blue-700">PEMBAYARAN 1</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <select v-model="payment.split1_metode" class="h-9 text-xs border rounded px-2">
+                                        <option value="CASH">CASH</option>
+                                        <option value="TRANSFER">TRANSFER</option>
+                                        <option value="EDC">EDC</option>
+                                    </select>
+                                    <input type="number" v-model.number="payment.total_bayar" placeholder="Nominal"
+                                        class="h-9 text-sm border rounded px-2 font-bold">
+                                </div>
+                                <div v-if="payment.split1_metode !== 'CASH'" class="space-y-2">
+                                    <input v-model="payment.bank_asal" placeholder="Bank Asal"
+                                        class="w-full h-8 text-xs px-2 border rounded">
+                                    <input v-model="payment.bank_tujuan" placeholder="Bank Tujuan"
+                                        class="w-full h-8 text-xs px-2 border rounded">
+                                    <input v-model="payment.ref" placeholder="No. Ref"
+                                        class="w-full h-8 text-xs px-2 border rounded">
+                                </div>
+                            </div>
+
+                            <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-200 space-y-2">
+                                <label class="text-[10px] font-bold text-indigo-700">PEMBAYARAN 2</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <select v-model="payment.split2_metode" class="h-9 text-xs border rounded px-2">
+                                        <option value="CASH">CASH</option>
+                                        <option value="TRANSFER">TRANSFER</option>
+                                        <option value="EDC">EDC</option>
+                                    </select>
+                                    <input type="number" v-model.number="payment.nominal2" placeholder="Nominal"
+                                        class="h-9 text-sm border rounded px-2 font-bold">
+                                </div>
+                                <div v-if="payment.split2_metode !== 'CASH'" class="space-y-2">
+                                    <input v-model="payment.bank_asal2" placeholder="Bank Asal"
+                                        class="w-full h-8 text-xs px-2 border rounded">
+                                    <input v-model="payment.bank_tujuan2" placeholder="Bank Tujuan"
+                                        class="w-full h-8 text-xs px-2 border rounded">
+                                    <input v-model="payment.ref2" placeholder="No. Ref"
+                                        class="w-full h-8 text-xs px-2 border rounded">
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
                 </div>
-                <div class="p-4 border-t bg-slate-50">
-                    <div class="flex justify-between font-bold text-lg mb-3">
-                        <span>Total Keseluruhan</span>
-                        <span class="text-blue-600"></span>
+
+                <div class="p-4 border-t bg-slate-50 mt-auto">
+                    <div class="space-y-1 mb-4 text-sm">
+                        <div class="flex justify-between text-slate-500">
+                            <span>Subtotal</span>
+                            <span>{{ formatNumber(penjualan.total_harga) }}</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-xl pt-2 border-t">
+                            <span>Total Akhir</span>
+                            <span class="text-blue-600">{{ formatNumber(totalKeseluruhan) }}</span>
+                        </div>
                     </div>
                     <button @click="handleProsesPembayaran"
-                        class="w-full bg-blue-600 text-white py-3 rounded font-bold shadow-lg hover:bg-blue-700 active:scale-95 transition">
-                        BAYAR
+                        class="w-full bg-blue-600 text-white py-4 rounded-lg font-bold shadow-lg hover:bg-blue-700 active:scale-95 transition flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        PROSES & CETAK NOTA
                     </button>
                 </div>
             </div>
@@ -163,36 +210,114 @@ dimana pembayaran ini ada 5 mode pembayaran yaitu CASH, TRANSFER, EDC, SPLIT, DP
 <script setup>
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
-import AuthLayout from '../../../Layouts/AuthLayout.vue';
+import AuthLayout from '../../../Layouts/AuthLayout.vue'
+import OffsetPanel from '../../../Components/OffsetPanel.vue'
 
 defineOptions({ layout: AuthLayout })
 
 const props = defineProps({
     penjualan: Object,
-    pelanggan: Array,
-    marketing: Array,
-    produk: Array,
 })
 
-const today = new Date().toLocaleDateString('id-ID')
-const step = ref(props.draft ? 3 : 1)
-
+const today = new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })
+const ongkir = ref(0)
+const diskon = ref(0)
 
 const payment = ref({
     tanggal_bayar: new Date().toISOString().slice(0, 10),
     metode: 'CASH',
+    // Pembayaran 1
+    split1_metode: 'CASH',
     total_bayar: 0,
     bank_asal: '',
+    bank_tujuan: '',
     ref: '',
+    // Pembayaran 2
+    split2_metode: 'TRANSFER',
+    nominal2: 0,
+    bank_asal2: '',
+    bank_tujuan2: '',
+    ref2: '',
 })
 
-const format = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
+
+const formatNumber = (val) => {
+    return new Intl.NumberFormat('id-ID').format(val || 0)
+}
+
+const totalKeseluruhan = computed(() => {
+    return (
+        Number(props.penjualan.total_penjualan || 0) +
+        Number(ongkir.value || 0) -
+        Number(diskon.value || 0)
+    )
+})
+
+const sisaTagihanSplit = computed(() => {
+    const sisa = totalKeseluruhan.value - payment.value.total_bayar;
+    return sisa > 0 ? sisa : 0;
+})
+
+const kembalian = computed(() => {
+    const totalBayar = payment.value.metode === 'SPLIT'
+        ? (payment.value.total_bayar + payment.value.nominal2)
+        : payment.value.total_bayar;
+
+    const sisa = totalBayar - totalKeseluruhan.value;
+    return sisa > 0 ? sisa : 0;
+})
+
+const handleProsesPembayaran = () => {
+    const payload = {
+        tanggal_bayar: payment.value.tanggal_bayar,
+        metode_bayar: payment.value.metode,
+        ongkir: ongkir.value,
+        diskon: diskon.value,
+        total_bayar: 0, // Akan diisi total dari semua split
+        details: [],
+    }
+
+    if (payment.value.metode === 'SPLIT') {
+        // Gabungkan Pembayaran 1
+        payload.details.push({
+            metode_bayar: payment.value.split1_metode,
+            nominal: payment.value.total_bayar,
+            bank_asal: payment.value.bank_asal,
+            bank_tujuan: payment.value.bank_tujuan,
+            ref_pembayaran: payment.value.ref
+        });
+        // Gabungkan Pembayaran 2
+        payload.details.push({
+            metode_bayar: payment.value.split2_metode,
+            nominal: payment.value.nominal2,
+            bank_asal: payment.value.bank_asal2,
+            bank_tujuan: payment.value.bank_tujuan2,
+            ref_pembayaran: payment.value.ref2
+        });
+        payload.total_bayar = payment.value.total_bayar + payment.value.nominal2;
+    } else {
+        // Normal Mode (CASH, TRANSFER, EDC, DP)
+        payload.total_bayar = payment.value.total_bayar;
+        payload.details.push({
+            metode_bayar: payment.value.metode,
+            nominal: payment.value.total_bayar,
+            bank_asal: payment.value.bank_asal,
+            bank_tujuan: payment.value.bank_tujuan,
+            ref_pembayaran: payment.value.ref
+        });
+    }
+
+    router.post(route('ecer.penjualan.pembayaran.bayar', props.penjualan.id), payload, {
+        onSuccess: () => setTimeout(() => window.print(), 500)
+    });
+}
 
 </script>
 
 <style scoped>
+/* Scrolled Area Styling */
 ::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -200,507 +325,179 @@ const format = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', curren
     border-radius: 10px;
 }
 
-/* Sembunyikan nota di layar aplikasi biasa */
-.print-only {
-    display: none;
-}
-
+/* CSS Khusus Print */
 @media print {
+    #forOffset {
+        background: white !important;
+    }
 
-    /* Sembunyikan semua elemen UI aplikasi */
+    .print\:hidden {
+        display: none !important;
+    }
+
     body * {
         visibility: hidden;
     }
 
-    /* Tampilkan hanya area nota */
     #printable-receipt,
     #printable-receipt * {
         visibility: visible;
-        font-family: 'Courier New', Courier, monospace;
-        /* Font struk standar */
     }
 
     #printable-receipt {
-        display: block !important;
         position: absolute;
         left: 0;
         top: 0;
         width: 80mm;
-        /* Lebar standar thermal besar */
-        padding: 2mm;
-        color: black;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
     }
 
-    /* Pengaturan Ukuran Kertas */
     @page {
         size: 80mm auto;
         margin: 0;
     }
 }
-
-/* Styling Tampilan Nota agar rapi */
-.receipt-container {
-    font-size: 12px;
-    line-height: 1.2;
-}
-
-.receipt-header {
-    text-align: center;
-    margin-bottom: 5px;
-}
-
-.store-name {
-    font-size: 16px;
-    font-bold: bold;
-}
-
-.receipt-divider {
-    text-align: center;
-    margin: 5px 0;
-}
-
-.receipt-info p {
-    margin: 0;
-}
-
-.receipt-item-group {
-    margin-bottom: 8px;
-}
-
-.item-name {
-    font-weight: bold;
-    display: block;
-}
-
-.item-detail {
-    display: flex;
-    justify-content: space-between;
-    padding-left: 2mm;
-    font-size: 11px;
-}
-
-.total-row {
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.receipt-footer {
-    text-align: center;
-    margin-top: 15px;
-    font-size: 10px;
-}
 </style>
 
-// route 
-Route::prefix('ecer')
-    ->name('ecer.')
-    ->middleware(['auth', 'role:admin-ecer'])
-    ->group(function () {
-        Route::prefix('penjualan')
-            ->name('penjualan.')
-            ->controller(PenjualanEcerController::class)
-            ->group(function () {
-                Route::get('/', 'index')->name('index');
 
+<script setup>
+import { ref, computed } from 'vue'
+import { Link, router } from '@inertiajs/vue3'
+import AuthLayout from '../../../Layouts/AuthLayout.vue'
+import OffsetPanel from '../../../Components/OffsetPanel.vue'
 
-                Route::prefix('transaksi')
-                    ->name('transaksi.')
-                    ->controller(TransaksiPenjualanEceranController::class)
-                    ->group(function () {
-                        Route::get('/', 'index')->name('index');
-                        Route::get('/list', 'list')->name('list');
-                        Route::post('/draft', 'storeDraft')->name('draft');
-                        Route::post('/item', 'simpanItems')->name('item');
-                        Route::delete('/{id}', 'hapusPenjualan')->name('hapus');
-                    });
+defineOptions({ layout: AuthLayout })
 
-                Route::prefix('pembayaran')
-                    ->name('pembayaran.')
-                    ->controller(PembayaranEcerController::class)
-                    ->group(function () {
-                        Route::get('/', 'index')->name('list-pembayaran');
-                        Route::get('/{id}', 'preparePembayaran')->name('prepare');
-                    });
-            });
+const props = defineProps({
+    penjualan: Object,
+    historyPembayaran: Array,
+})
+
+const today = new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })
+const ongkir = ref(0)
+const diskon = ref(0)
+
+const payment = ref({
+    tanggal_bayar: new Date().toISOString().slice(0, 10),
+    metode: 'CASH',
+    // Pembayaran 1
+    split1_metode: 'CASH',
+    nominal1: 0, // Ganti dari total_bayar menjadi nominal1 agar sinkron
+    bank_asal: '',
+    bank_tujuan: '',
+    ref: '',
+    // Pembayaran 2
+    split2_metode: 'TRANSFER',
+    nominal2: 0,
+    bank_asal2: '',
+    bank_tujuan2: '',
+    ref2: '',
+})
+
+const formatNumber = (val) => {
+    return new Intl.NumberFormat('id-ID').format(val || 0)
+}
+
+const totalKeseluruhan = computed(() => {
+    return (
+        Number(props.penjualan.total_penjualan || 0) +
+        Number(ongkir.value || 0) -
+        Number(diskon.value || 0)
+    )
+})
+
+const totalSudahDibayar = computed(() => {
+    return props.historyPembayaran.reduce((acc, item) => acc + Number(item.nominal || 0), 0);
+});
+
+const sisaTagihanSplit = computed(() => {
+    const sisa = totalKeseluruhan.value - payment.value.nominal1;
+    return sisa > 0 ? sisa : 0;
+})
+
+const sisaTagihanDP = computed(() => {
+    const sisa = totalKeseluruhan.value - totalSudahDibayar.value;
+    return sisa > 0 ? sisa : 0;
+});
+
+const kembalian = computed(() => {
+    const totalUangMasukSekarang = payment.value.metode === 'SPLIT'
+        ? (payment.value.nominal1 + payment.value.nominal2)
+        : payment.value.nominal1;
+
+    const targetBayar = props.penjualan.status === 'DP' ? sisaTagihanDP.value : totalKeseluruhan.value;
+
+    const sisa = totalUangMasukSekarang - targetBayar;
+    return sisa > 0 ? sisa : 0;
+});
+
+const sisaSetelahBayarIni = computed(() => {
+    const totalUangMasukSekarang = payment.value.metode === 'SPLIT'
+        ? (payment.value.nominal1 + payment.value.nominal2)
+        : payment.value.nominal1;
+
+    const target = props.penjualan.status === 'DP' ? sisaTagihanDP.value : totalKeseluruhan.value;
+    const sisa = target - totalUangMasukSekarang;
+    return sisa > 0 ? sisa : 0;
+});
+
+const handleProsesPembayaran = () => {
+    const totalUangMasukSekarang = payment.value.metode === 'SPLIT'
+        ? (payment.value.nominal1 + payment.value.nominal2)
+        : payment.value.nominal1;
+
+    const targetYgHarusDibayar = props.penjualan.status === 'DP' ? sisaTagihanDP.value : totalKeseluruhan.value;
+
+    // VALIDASI: Jika metode bukan DP, maka pembayaran tidak boleh kurang (harus lunas)
+    if (payment.value.metode !== 'DP') {
+        if (totalUangMasukSekarang < targetYgHarusDibayar) {
+            alert('Nominal kurang! Gunakan metode DP jika pelanggan ingin mencicil/hutang.');
+            return;
+        }
+    }
+
+    const payload = {
+        tanggal_bayar: payment.value.tanggal_bayar,
+        metode_bayar: payment.value.metode,
+        ongkir: ongkir.value,
+        diskon: diskon.value,
+        yangdibayar: totalUangMasukSekarang, // Total nominal yang dibayar saat ini
+        total_bayar: totalKeseluruhan.value, // Total nota yang seharusnya
+        status_penjualan: sisaSetelahBayarIni.value > 0 ? 'DP' : 'LUNAS', // Beritahu backend status barunya
+        details: [],
+    }
+
+    if (payment.value.metode === 'SPLIT') {
+        payload.details.push({
+            metode_bayar: payment.value.split1_metode,
+            nominal: payment.value.nominal1,
+            bank_asal: payment.value.bank_asal,
+            bank_tujuan: payment.value.bank_tujuan,
+            ref_pembayaran: payment.value.ref
+        });
+        payload.details.push({
+            metode_bayar: payment.value.split2_metode,
+            nominal: payment.value.nominal2,
+            bank_asal: payment.value.bank_asal2,
+            bank_tujuan: payment.value.bank_tujuan2,
+            ref_pembayaran: payment.value.ref2
+        });
+    } else {
+        payload.details.push({
+            metode_bayar: payment.value.metode,
+            nominal: payment.value.nominal1,
+            bank_asal: payment.value.bank_asal,
+            bank_tujuan: payment.value.bank_tujuan,
+            ref_pembayaran: payment.value.ref
+        });
+    }
+
+    router.post(route('ecer.penjualan.pembayaran.bayar', props.penjualan.id), payload, {
+        onSuccess: () => setTimeout(() => window.print(), 500)
     });
-
-// controller 
-
-<?php
-
-namespace App\Http\Controllers\Ecer;
-
-use App\Http\Controllers\Controller;
-use App\Models\DetailPaket;
-use App\Models\DetailPenjualan;
-use App\Models\ItemPenjualan;
-use App\Models\Pelanggan;
-use App\Models\Penjualan;
-use App\Models\Perusahaan;
-use App\Models\ProdukVarian;
-use App\Models\StokFisik;
-use App\Models\Supplier;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-
-class TransaksiPenjualanEceranController extends Controller
-{
-    public function list(Request $request)
-    {
-        $query = Penjualan::with([
-            'pelanggan',
-            'marketing',
-            'items.produk_varian.produk',
-            'items.detailPenjualan'
-        ])->where('status_penjualan', 'UNPAID');
-
-        // Tambahkan filter search sederhana jika dibutuhkan
-        if ($request->search) {
-            $query->where('nomer_nota', 'like', "%{$request->search}%")
-                ->orWhereHas('pelanggan', function ($q) use ($request) {
-                    $q->where('nama', 'like', "%{$request->search}%");
-                });
-        }
-        return inertia('Ecer/Penjualan/List', [
-            'penjualan' => $query->latest()->get(),
-        ]);
-    }
-
-    public function index(Request $request)
-    {
-
-        $penjualan = Penjualan::with([
-            'items.produk_varian.produk',
-            'items.produk_varian.stokFisiks',
-            'pelanggan',
-            'marketing'
-        ])
-            ->where('status_penjualan', 'DRAFT')
-            ->first();
-
-        return inertia('Ecer/Penjualan/Kasir', [
-            'draft' => $penjualan,
-            'pelanggan' => Pelanggan::orderBy('nama')->get(),
-            'marketing' => Supplier::where('status', 'marketing')->get(),
-            'produk' => ProdukVarian::with([
-                'produk',
-                'stokFisiks' => fn($q) => $q->where('total_panjang', '>', 0),
-                'detailIsiPaket.satuan',
-            ])->get(),
-            'company' => Perusahaan::find(1) ?? null,
-        ]);
-    }
-
-    public function storeDraft(Request $request)
-    {
-        // dd($request);
-        $data = $request->validate([
-            'tanggal_transaksi' => 'required|date',
-            'pelanggan' => 'required|string',
-            'marketing' => 'nullable|string',
-        ]);
-
-        return DB::transaction(function () use ($data) {
-
-            $slugPelanggan = Str::slug($data['pelanggan']);
-
-            $pelanggan = Pelanggan::firstOrCreate(
-                ['slug' => $slugPelanggan],
-                ['nama' => $data['pelanggan']]
-            );
-
-
-            $marketing = null;
-
-            if (!empty($data['marketing'])) {
-                $slugMarketing = Str::slug($data['marketing']);
-
-                $marketing = Supplier::firstOrCreate(
-                    ['slug' => $slugMarketing],
-                    [
-                        'nama' => $data['marketing'],
-                        'status' => 'marketing'
-                    ]
-                );
-            }
-
-
-
-            $penjualan = Penjualan::updateOrCreate(
-                [
-                    'user_id' => Auth::id(),
-                    'status_penjualan' => 'DRAFT',
-                ],
-                [
-                    'nomer_nota' => $this->generateNota(),
-                    'tanggal_transaksi' => $data['tanggal_transaksi'],
-                    'pelanggan_id' => $pelanggan->id,
-                    'marketing_id' => $marketing?->id,
-                    'total_harga' => 0,
-                    'diskon' => 0,
-                    'pajak' => 0,
-                    'biaya_kirim' => 0,
-                    'total_akhir' => 0,
-                    'metode_bayar' => null,
-                ]
-            );
-
-            return redirect()->back()->with('draft_id', $penjualan->id);
-        });
-    }
-
-    protected function generateNota(): string
-    {
-        $prefix = 'INV-' . now()->format('Ym');
-
-        $last = Penjualan::where('nomer_nota', 'like', "$prefix%")
-            ->orderByDesc('id')
-            ->value('nomer_nota');
-
-        $number = $last
-            ? (int) substr($last, -4) + 1
-            : 1;
-
-        return $prefix . '-' . str_pad($number, 4, '0', STR_PAD_LEFT);
-    }
-
-    public function simpanItems(Request $request)
-    {
-
-        $request->validate([
-            'penjualan_id' => 'required|exists:penjualans,id',
-            'items' => 'required|array|min:1',
-            'items.*.variant_id' => 'required|exists:produk_varians,id',
-            'items.*.satuan_id' => 'required',
-            'items.*.harga' => 'required|numeric|min:0',
-            'items.*.details' => 'required|array|min:1',
-            'items.*.details.*.roll_id' => 'required|exists:detail_pakets,id',
-            'items.*.details.*.qty' => 'required|numeric|min:0.01',
-        ]);
-
-        // dd($request);
-
-        return DB::transaction(function () use ($request) {
-
-            $grandTotal = 0;
-
-            foreach ($request->items as $item) {
-
-                $totalQtyVarian = 0;
-
-                foreach ($item['details'] as $detail) {
-                    $detailPaket = DetailPaket::findOrFail($detail['roll_id']);
-
-                    // VALIDASI STOK: Cek apakah qty yang diinput melebihi stok fisik roll
-                    if ($detail['qty'] > $detailPaket->qty) {
-                        throw \Illuminate\Validation\ValidationException::withMessages([
-                            'items' => "Stok Roll ID {$detail['roll_id']} tidak mencukupi. Sisa: {$detailPaket->qty}, Input: {$detail['qty']}"
-                        ]);
-                    }
-
-                    $detail = DetailPenjualan::create([
-                        'item_penjualan_id' => $request->penjualan_id,
-                        'varian_id' => $item['variant_id'],
-                        'satuan_id' => $detailPaket->satuan_id,
-                        'qty' => $detail['qty'],
-                        'status' => 'transisi',
-                    ]);
-
-                    $samaBanyak = $detailPaket->qty - $detail['qty'] === 0;
-                    if ($samaBanyak) {
-                        $detailPaket->delete();
-                    } else {
-                        $detailPaket->decrement('qty', $detail['qty']);
-                    }
-
-                    $totalQtyVarian += $detail['qty'];
-                }
-
-
-                $subtotal = $totalQtyVarian * $item['harga'];
-
-                $item_penjualan = ItemPenjualan::create([
-                    'penjualan_id' => $request->penjualan_id,
-                    'produk_varian_id' => $item['variant_id'],
-                    'satuan_id' => $item['satuan_id'],
-                    'qty' => $totalQtyVarian,
-                    'harga_satuan' => $item['harga'],
-                    'subtotal' => $subtotal,
-                ]);
-
-                $grandTotal += $subtotal;
-            }
-
-            Penjualan::where('id', $request->penjualan_id)->update([
-                'total_harga' => $grandTotal,
-                'status_penjualan' => 'UNPAID',
-            ]);
-
-            return redirect()->route('ecer.penjualan.pembayaran.prepare', $request->penjualan_id);
-        });
-    }
-
-    public function hapusPenjualan(Request $request, $id)
-    {
-        return DB::transaction(function () use ($id) {
-            $penjualan = Penjualan::findOrFail($id);
-
-            $penjualan->items()->delete();
-
-            $penjualan->delete();
-
-            return redirect()->back();
-        });
-    }
-}
-
-<?php
-
-namespace App\Http\Controllers\Ecer;
-
-use App\Http\Controllers\Controller;
-use App\Models\Pelanggan;
-use App\Models\Pembayaran;
-use App\Models\Penjualan;
-use App\Models\ProdukVarian;
-use App\Models\Supplier;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-
-class PembayaranEcerController extends Controller
-{
-    public function index(Request $request)
-    {
-        $query = Pembayaran::with([
-            'pelanggan',
-            'marketing',
-            'items.produk_varian.produk',
-            'items.detailPenjualan'
-        ])->where('status_penjualan', 'UNPAID');
-
-        // Tambahkan filter search sederhana jika dibutuhkan
-        if ($request->search) {
-            $query->where('nomer_nota', 'like', "%{$request->search}%")
-                ->orWhereHas('pelanggan', function ($q) use ($request) {
-                    $q->where('nama', 'like', "%{$request->search}%");
-                });
-        }
-
-        return inertia('Ecer/Penjualan/ListPembayaran', [
-            'penjualan' => $query->latest()->get(),
-        ]);
-    }
-
-    public function preparePembayaran($id)
-    {
-        return inertia('Ecer/Penjualan/Pembayaran', [
-            'penjualan' => Penjualan::with([
-                'pelanggan',
-                'items.produk_varian.produk',
-                'items.detailPenjualan'
-            ])->findOrFail($id),
-
-            'pelanggan' => Pelanggan::orderBy('nama')->get(),
-            'marketing' => Supplier::where('status', 'marketing')->get(),
-            'produk' => ProdukVarian::with([
-                'produk',
-                'stokFisiks' => fn($q) => $q->where('total_panjang', '>', 0),
-                'detailIsiPaket.satuan',
-            ])->get(),
-        ]);
-    }
-
-    public function bayar(Request $request, Penjualan $penjualan)
-    {
-        $data = $request->validate([
-            'tanggal_bayar' => 'required|date',
-            'metode_bayar' => 'required|string',
-            'total_bayar' => 'required|numeric|min:0',
-            'details' => 'array',
-        ]);
-
-        DB::transaction(function () use ($penjualan, $data) {
-
-            $pembayaran = Pembayaran::create([
-                'penjualan_id' => $penjualan->id,
-                'tanggal_bayar' => $data['tanggal_bayar'],
-                'total_bayar' => $data['total_bayar'],
-                'jenis_pembayaran' => $data['metode_bayar'],
-            ]);
-
-            foreach ($data['details'] ?? [] as $detail) {
-                $pembayaran->detail_pembayarans()->create($detail);
-            }
-
-            $penjualan->update([
-                'status_penjualan' => 'PAID',
-                'total_akhir' => $data['total_bayar'],
-            ]);
-        });
-
-        return redirect()->route('ecer.penjualan.print', $penjualan);
-    }
-}
-
-// model pembayaran
-
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-
-class Pembayaran extends Model
-{
-    protected $fillable = [
-        'penjualan_id',
-        'nomer_pembayaran',
-        'tanggal_bayar',
-        'total_bayar',
-        'jenis_pembayaran',
-        'keterangan',
-        'is_dp',
-    ];
-
-    public function penjualan()
-    {
-        return $this->belongsTo(Penjualan::class, 'penjualan_id');
-    }
-
-    public function detail_pembayarans()
-    {
-        return $this->hasMany(PembayaranDetails::class, 'pembayaran_id');
-    }
-}
-
-// model pembayaran detail
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-
-class PembayaranDetails extends Model
-{
-    protected $fillable = [
-        'pembayaran_id',
-        'bank_asal',
-        'akun_asal',
-        'bank_tujuan',
-        'metode_bayar',
-        'status',
-        'ref_pembayaran',
-        'nominal',
-    ];
-
-    public function pembayaran()
-    {
-        return $this->belongsTo(Pembayaran::class, 'pembayaran_id');
-    }
 }
 
 
+</script>

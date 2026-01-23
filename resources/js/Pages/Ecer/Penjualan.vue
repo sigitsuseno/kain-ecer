@@ -7,17 +7,17 @@
                     <div class="w-10 h-8 flex items-center justify-center">
                         <i class='bx bx-plus text-3xl'></i>
                     </div>
-                    <span class="text-xs text-center">Produk</span>
+                    <span class="text-xs text-center">Kasir</span>
                 </button>
             </div>
             <div class="flex items-center gap-2">
-                <Link href="#"
+                <!-- <Link href="#"
                     class="w-16 h-16 bg-white rounded-sm shadow hover:shadow-lg hover:bg-white/50 flex flex-col items-center justify-center gap-2">
                     <div class="w-10 h-8 flex items-center justify-center">
                         <i class='bx bx-category text-3xl'></i>
                     </div>
                     <span class="text-xs text-center">Kategori</span>
-                </Link>
+                </Link> -->
             </div>
         </div>
 
@@ -75,9 +75,19 @@
                                 class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
                                 BAYAR
                             </Link>
-                            <Link v-if="pnj.status === 'DP'" :href="`/ecer/penjualan/pembayaran/${pnj.id}`"
+                            <div v-if="pnj.status === 'DP'">
+                                <Link :href="`/ecer/penjualan/pembayaran/${pnj.id}`"
+                                    class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
+                                    BAYAR
+                                </Link>
+                                <Link :href="`/ecer/penjualan/pembayaran/print/${pnj.id}`"
+                                    class="px-3 py-1 bg-green-600 text-white rounded text-[10px] font-bold hover:bg-green-700 shadow-sm transition-all active:scale-95">
+                                    PRINT
+                                </Link>
+                            </div>
+                            <Link v-if="pnj.status === 'LUNAS'" :href="`/ecer/penjualan/pembayaran/print/${pnj.id}`"
                                 class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
-                                BAYAR
+                                PRINT
                             </Link>
                         </div>
                     </div>

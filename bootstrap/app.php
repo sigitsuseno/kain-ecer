@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // Value adalah path lengkap ke class middleware-nya
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            '/print-thermal',
+            '/ecer/penjualan/print-thermal',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

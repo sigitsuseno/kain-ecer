@@ -26,7 +26,7 @@ class Penjualan extends Model
 
     public function pembayaran()
     {
-        return $this->hasOne(Pembayaran::class, 'penjualan_id');
+        return $this->hasMany(Pembayaran::class, 'penjualan_id');
     }
 
     public function pelanggan()

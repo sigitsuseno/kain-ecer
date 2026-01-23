@@ -13,6 +13,7 @@ use App\Models\PenjualanItem;
 use App\Models\Perusahaan;
 use App\Models\ProdukDetail;
 use App\Models\ProdukVarian;
+use App\Models\Satuan;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -141,14 +142,109 @@ class TransaksiPenjualanEceranController extends Controller
         return $prefix . '-' . str_pad($number, 4, '0', STR_PAD_LEFT);
     }
 
+    // public function simpanItems(Request $request)
+    // {
+
+    //     $request->validate([
+    //         'penjualan_id' => 'required|exists:penjualans,id',
+    //         'items' => 'required|array|min:1',
+    //         'items.*.variant_id' => 'required|exists:produk_varians,id',
+    //         'items.*.harga' => 'required|numeric|min:0',
+    //         'items.*.details' => 'required|array|min:1',
+    //         'items.*.details.*.roll_id' => 'required',
+    //         'items.*.details.*.qty' => 'required|numeric|min:0.01',
+    //     ]);
+
+    //     // dd($request);
+
+    //     return DB::transaction(function () use ($request) {
+
+    //         $penjualan = Penjualan::with(['items.details', 'items.varian.details'])->findOrFail($request->penjualan_id);
+
+    //         $grandTotal = 0;
+
+    //         foreach ($request->items as $item) {
+
+    //             $totalQtyVarian = 0;
+    //             $subtotaljmlhHarga = 0;
+
+    //             $item_penjualan = $penjualan->items()->create([
+    //                 'varian_id' => $item['variant_id'],
+    //                 'harga_satuan' => $item['harga'],
+    //             ]);
+
+    //             $itemPid = $item_penjualan->id;
+
+    //             foreach ($item['details'] as $detail) {
+
+    //                 $p_detail = ProdukDetail::findOrFail($detail['roll_id']);
+
+    //                 // VALIDASI STOK: Cek apakah qty yang diinput melebihi stok fisik roll
+
+    //                 $satuanBeli = Satuan::where('nama_satuan', $detail['satuan_beli'])->first()->id;
+    //                 $realQtyOut = round($detail['qty'] / $detail['koefisien'], 2);
+
+    //                 if ($detail['qty'] > $p_detail->qty) {
+    //                     throw \Illuminate\Validation\ValidationException::withMessages([
+    //                         'items' => "Stok Roll ID {$detail['roll_id']} tidak mencukupi. Sisa: {$p_detail->qty}, Input: {$detail['qty']}"
+    //                     ]);
+    //                 }
+    //                 // 1. Hitung harga konversi asli (jangan dibulatkan dulu)
+    //                 $hargaKonversiAsli = $item['harga'] / $detail['koefisien'];
+
+    //                 // 2. Hitung jumlah harga asli (Qty x Harga Asli)
+    //                 $jumlahHargaAsli = $detail['qty'] * $hargaKonversiAsli;
+
+    //                 // 3. BARU BULATKAN TOTALNYA KE ATAS 500
+    //                 $jumlahHargaDibulatkan = ceil($jumlahHargaAsli / 500) * 500;
+
+    //                 $penjualanDetail = PenjualanDetail::create([
+    //                     'penjualan_item_id' => $itemPid,
+    //                     'satuan_id' => $satuanBeli ?? null,
+    //                     'qty' => $detail['qty'],
+    //                     'harga' => $hargaKonversiAsli, // Simpan harga asli agar nota akurat
+    //                     'jumlah_harga' => $jumlahHargaDibulatkan, // Simpan total yang sudah bulat
+    //                     'status' => 'transisi',
+    //                 ]);
+
+    //                 $subtotaljmlhHarga += $jumlahHargaDibulatkan;
+
+    //                 $samaBanyak = $p_detail->qty - $realQtyOut < 0.1;
+    //                 if ($samaBanyak) {
+    //                     $p_detail->delete();
+    //                 } else {
+    //                     $p_detail->decrement('qty', $realQtyOut);
+    //                 }
+
+    //                 $totalQtyVarian += $realQtyOut;
+    //             }
+
+
+    //             $subtotal = $subtotaljmlhHarga;
+
+    //             $item_penjualan->update([
+    //                 'qty' => $totalQtyVarian,
+    //                 'subtotal' => $subtotal,
+    //             ]);
+
+    //             $grandTotal += $subtotal;
+    //         }
+
+    //         Penjualan::where('id', $request->penjualan_id)->update([
+    //             'total_penjualan' => $grandTotal,
+    //             'status' => 'UNPAID',
+    //         ]);
+
+    //         return redirect()->route('ecer.penjualan.pembayaran.prepare', $request->penjualan_id);
+    //     });
+    // }
+
     public function simpanItems(Request $request)
     {
-
         $request->validate([
             'penjualan_id' => 'required|exists:penjualans,id',
             'items' => 'required|array|min:1',
             'items.*.variant_id' => 'required|exists:produk_varians,id',
-            'items.*.satuan_id' => 'required',
             'items.*.harga' => 'required|numeric|min:0',
             'items.*.details' => 'required|array|min:1',
             'items.*.details.*.roll_id' => 'required',
@@ -158,64 +254,72 @@ class TransaksiPenjualanEceranController extends Controller
         // dd($request);
 
         return DB::transaction(function () use ($request) {
-
-            $penjualan = Penjualan::with(['items.details', 'items.varian.details'])->findOrFail($request->penjualan_id);
-
+            $penjualan = Penjualan::findOrFail($request->penjualan_id);
             $grandTotal = 0;
 
             foreach ($request->items as $item) {
-
-                $totalQtyVarian = 0;
+                $totalQtyJual = 0;
+                $subtotalUangItem = 0;
 
                 $item_penjualan = $penjualan->items()->create([
                     'varian_id' => $item['variant_id'],
-                    'satuan_id' => $item['satuan_id'],
-                    'harga_satuan' => $item['harga'],
+                    'harga_satuan' => $item['harga'], // Harga dasar per Yard
                 ]);
 
-
-                $itemPid = $item_penjualan->id;
-
                 foreach ($item['details'] as $detail) {
+                    // LOCK FOR UPDATE: Mencegah data diubah transaksi lain saat proses ini berjalan
+                    $p_detail = ProdukDetail::where('id', $detail['roll_id'])->lockForUpdate()->firstOrFail();
 
-                    $p_detail = ProdukDetail::findOrFail($detail['roll_id']);
+                    // 1. Hitung kebutuhan stok asli (Yard)
+                    $realQtyOut = round($detail['qty'] / $detail['koefisien'], 2);
 
-                    // VALIDASI STOK: Cek apakah qty yang diinput melebihi stok fisik roll
-                    if ($detail['qty'] > $p_detail->qty) {
+                    // 2. VALIDASI GUDANG: Mencegah stok minus
+                    if ($realQtyOut > $p_detail->qty) {
                         throw \Illuminate\Validation\ValidationException::withMessages([
-                            'items' => "Stok Roll ID {$detail['roll_id']} tidak mencukupi. Sisa: {$p_detail->qty}, Input: {$detail['qty']}"
+                            'items' => "Stok tidak cukup untuk {$item['nama']}. Tersedia: {$p_detail->qty}, Diminta: {$realQtyOut}"
                         ]);
                     }
 
-                    $detail = PenjualanDetail::create([
-                        'penjualan_item_id' => $itemPid,
-                        'satuan_id' => $p_detail->satuan_id,
-                        'qty' => $detail['qty'],
+                    // 3. LOGIKA PEMBULATAN (Total Baris ke atas 500)
+                    $hargaKonversi = $item['harga'] / $detail['koefisien'];
+                    $jumlahHargaAsli = $detail['qty'] * $hargaKonversi;
+                    $jumlahHargaDibulatkan = ceil($jumlahHargaAsli / 500) * 500;
+
+                    // 4. SIMPAN DETAIL
+                    $satuanBeli = Satuan::where('nama_satuan', $detail['satuan_beli'])->first();
+
+                    PenjualanDetail::create([
+                        'penjualan_item_id' => $item_penjualan->id,
+                        'satuan_id' => $satuanBeli->id ?? null,
+                        'qty' => $detail['qty'], // Qty Meter
+                        'harga' => $hargaKonversi,
+                        'jumlah_harga' => $jumlahHargaDibulatkan,
                         'status' => 'transisi',
                     ]);
 
-                    $samaBanyak = $p_detail->qty - $detail['qty'] === 0;
-                    if ($samaBanyak) {
+                    // 5. UPDATE STOK: Hapus jika sisa sangat sedikit, atau decrement
+                    $sisaStok = $p_detail->qty - $realQtyOut;
+                    if ($sisaStok <= 0.01) {
                         $p_detail->delete();
                     } else {
-                        $p_detail->decrement('qty', $detail['qty']);
+                        $p_detail->update(['qty' => $sisaStok]);
                     }
 
-                    $totalQtyVarian += $detail['qty'];
+                    $subtotalUangItem += $jumlahHargaDibulatkan;
+                    $totalQtyJual += $detail['qty']; // Akumulasi Qty Meter
                 }
 
-
-                $subtotal = $totalQtyVarian * $item['harga'];
-
+                // Update Header Item per Varian
                 $item_penjualan->update([
-                    'qty' => $totalQtyVarian,
-                    'subtotal' => $subtotal,
+                    'qty' => $totalQtyJual,
+                    'subtotal' => $subtotalUangItem,
                 ]);
 
-                $grandTotal += $subtotal;
+                $grandTotal += $subtotalUangItem;
             }
 
-            Penjualan::where('id', $request->penjualan_id)->update([
+            // Update Grand Total Penjualan
+            $penjualan->update([
                 'total_penjualan' => $grandTotal,
                 'status' => 'UNPAID',
             ]);
@@ -223,7 +327,6 @@ class TransaksiPenjualanEceranController extends Controller
             return redirect()->route('ecer.penjualan.pembayaran.prepare', $request->penjualan_id);
         });
     }
-
     public function hapusPenjualan(Request $request, $id)
     {
         return DB::transaction(function () use ($id) {
