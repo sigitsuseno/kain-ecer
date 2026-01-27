@@ -277,3 +277,5 @@ Route::prefix('grosir')
                 Route::get('/update-data', 'updateData')->name('update-data');
             });
     });
+
+Route::get('/grosir/comparing', [PenerimaanController::class, 'comparing'])->name('comparing');

@@ -2,10 +2,10 @@
     <div class="w-full h-[calc(100vh-48px)] overflow-hidden bg-blue-100 relative">
         <div class="text-2xl font-semibold text-primary py-2 px-6 mt-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <i class='bx bxs-package'></i> <span>Riwayat Penerimaan Barang</span>
+                <i class='bx bxs-package'></i> <span>Daftar Transaksi Penjualan</span>
             </div>
             <div class="flex items-center gap-4">
-                <Link v-if="!penjualan.id" href="/grosir/penjualan/update-data"
+                <Link v-if="penjualan.total === 0 && !params.search" href="/grosir/penjualan/update-data"
                     class="px-4 h-9 flex items-center gap-2 text-sm bg-indigo-600 hover:bg-indigo-700 active:scale-90 text-white rounded shadow-md transition-all">
                     <i class='bx bx-plus'></i>
                     UPDATE DATA
@@ -31,8 +31,8 @@
                         <div class="relative">
                             <i class='bx bx-search absolute left-3 top-2.5 text-gray-400'></i>
                             <input type="search" v-model="params.search"
-                                class="w-72 h-9 pl-9 pr-4 text-sm border border-gray-300 rounded outline-none focus:border-primary"
-                                placeholder="Cari No. Nota...">
+                                class="w-80 h-9 pl-9 pr-4 text-sm border border-gray-300 rounded outline-none focus:border-primary"
+                                placeholder="Cari No. Nota atau Nama Pelanggan...">
                         </div>
                     </div>
                 </div>
@@ -46,6 +46,7 @@
                                 <th class="px-2 py-1 text-left border-b">Ringkasan Produk</th>
                                 <th class="px-2 py-1 text-center border-b">Total Roll</th>
                                 <th class="px-2 py-1 text-center border-b">Total Panjang</th>
+                                <th class="px-2 py-1 text-center border-b">Status</th>
                                 <th class="px-2 py-1 text-center border-b">Aksi</th>
                             </tr>
                         </thead>
@@ -62,6 +63,7 @@
                                     <td v-if="itIndex === 0" :rowspan="p.items.length"
                                         class="px-2 py-2 font-bold text-primary align-top border border-slate-400">
                                         <div class="flex flex-col">
+                                            <span class="text-sm">{{ p.pelanggan.nama }}</span>
                                             <span class="text-sm">{{ p.nomer }}</span>
                                             <span class="text-xs text-gray-600 font-normal">{{ p.tanggal }}</span>
                                         </div>
@@ -90,6 +92,12 @@
                                         {{ it.total_qty }} Yd
                                     </td>
 
+                                    <td v-if="itIndex === 0" :rowspan="p.items.length"
+                                        class="px-2 py-2 text-center border-l align-top border border-slate-400">
+                                        <div class="flex items-center justify-center gap-2">
+                                            {{ p.status }}
+                                        </div>
+                                    </td>
                                     <td v-if="itIndex === 0" :rowspan="p.items.length"
                                         class="px-2 py-2 text-center border-l align-top border border-slate-400">
                                         <div class="flex items-center justify-center gap-2">
@@ -186,7 +194,8 @@ let timeout = null;
 watch(params, (newParams) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
-        router.get('/grosir/penerimaan', newParams, {
+        // Pastikan URL mengarah ke index penjualan
+        router.get('/grosir/penjualan', newParams, {
             preserveState: true,
             replace: true,
             preserveScroll: true,

@@ -60,6 +60,8 @@
                                     <div class="font-bold text-slate-800">{{ p.produk?.nama || 'Tanpa Nama' }}</div>
                                     <div class="text-xs font-mono text-slate-800 uppercase tracking-tighter">{{
                                         p.nama }}</div>
+                                    <div class="text-xs font-mono text-slate-800 uppercase tracking-tighter">{{
+                                        p.id }}</div>
                                     <!-- <div class="text-xs font-mono text-slate-800 uppercase tracking-tighter">Satuan : {{
                                         p.produk.satuan.nama_satuan }}</div> -->
                                 </td>

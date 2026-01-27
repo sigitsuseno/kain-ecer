@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('penjualan_item_id');
             $table->unsignedBigInteger('satuan_id')->nullable();
+            $table->unsignedBigInteger('produk_detail_id')->nullable();
             $table->decimal('qty', 19, 2)->default(0);
             $table->decimal('harga', 19, 2)->default(0);
             $table->decimal('jumlah_harga', 19, 2)->default(0);

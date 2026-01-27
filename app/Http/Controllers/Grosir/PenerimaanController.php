@@ -378,14 +378,139 @@ class PenerimaanController extends Controller
         }
     }
 
+    // public function updateData()
+    // {
+    //     // Gunakan Transaction agar jika satu gagal, semua dibatalkan (data tidak kotor)
+    //     DB::transaction(function () {
+    //         $oldTerimaBarang = DB::connection('sqlite_lama')->table('purchase_invoices')->get();
+
+    //         foreach ($oldTerimaBarang as $oldter) {
+    //             // Gunakan Model::create agar mendapatkan objek $penerimaan [cite: 40]
+    //             $penerimaan = Pembelian::create([
+    //                 'supplier_id'      => $oldter->supplier_id,
+    //                 'nomer'            => (string) Str::ulid(),
+    //                 'tanggal'          => $oldter->transaction_date,
+    //                 'total_pembelian'  => $oldter->total_purchase_roll,
+    //                 'beban_ongkir'     => $oldter->shipping_cost ?? 0,
+    //                 'beban_biaya'      => $oldter->other_cost ?? 0,
+    //                 'status'           => 'DITERIMA',
+    //                 'catatan'          => "Migrasi: Total Old Length " . $oldter->total_purchase_length,
+    //                 'created_at'       => $oldter->created_at,
+    //                 'updated_at'       => $oldter->updated_at
+    //             ]);
+
+    //             $oldTerimaBarangItems = DB::connection('sqlite_lama')->table('purchase_invoice_items')
+    //                 ->where('purchase_invoice_id', $oldter->id)
+    //                 ->get();
+
+    //             foreach ($oldTerimaBarangItems as $item) {
+    //                 $oldProduct = DB::connection('sqlite_lama')->table('products')->find($item->product_id);
+
+    //                 if (!$oldProduct) continue;
+
+    //                 $total_panjang = 0;
+    //                 $total_roll = 0;
+
+    //                 // 1. Sinkronisasi Kategori
+    //                 $kategori = Kategori::firstOrCreate(
+    //                     ['slug' => Str::slug($oldProduct->name)],
+    //                     [
+    //                         'nama_kategori' => $oldProduct->name,
+    //                         'status'        => 'aktif',
+    //                         'deskripsi'     => ''
+    //                     ]
+    //                 );
+
+    //                 // 2. Sinkronisasi Satuan
+    //                 $satuan = Satuan::firstOrCreate(
+    //                     ['nama_satuan' => $oldProduct->unit_satuan ?? 'Yard'],
+    //                     ['inisial' => 'Yd']
+    //                 );
+
+    //                 // 3. Sinkronisasi Produk [cite: 52]
+    //                 $newProduk = Produk::firstOrCreate(
+    //                     ['nama' => $oldProduct->name],
+    //                     [
+    //                         'kategori_id' => $kategori->id,
+    //                         'satuan_id'   => $satuan->id,
+    //                         'deskripsi'   => $oldProduct->description,
+    //                         'status'      => 'aktif',
+    //                     ]
+    //                 );
+
+    //                 // 4. Sinkronisasi Varian (Mapping ID Lama ke Varian ID) [cite: 58]
+    //                 $varian = ProdukVarian::firstOrCreate(
+    //                     ['sku' => $oldProduct->kode_barang],
+    //                     [
+    //                         'produk_id'  => $newProduk->id,
+    //                         'gudang_id'  => 2,
+    //                         'nama'       => $oldProduct->kode_warna ?? 'Default',
+    //                         'tipe'       => $oldProduct->tipe,
+    //                         'panjang'    => $oldProduct->total_lenght ?? 0,
+    //                         'jumlah'     => $oldProduct->jumlah_roll ?? 0,
+    //                         'is_paket'   => false,
+    //                         'harga_beli' => $oldProduct->cost_price ?? 0,
+    //                         'harga_jual' => $oldProduct->selling_price ?? 0,
+    //                     ]
+    //                 );
+
+    //                 // 5. Simpan Item Pembelian [cite: 43]
+    //                 $penerimaanItem = $penerimaan->items()->create([
+    //                     'varian_id'    => $varian->id,
+    //                     'satuan_id'    => $satuan->id,
+    //                     'total_qty'    => $item->total_lenght,
+    //                     'total_jumlah' => $item->jumlah_roll,
+    //                     'harga_beli'   => 0,
+    //                     'subtotal'     => 0,
+    //                 ]);
+
+    //                 // 6. Buat Header Stok (Batch) [cite: 61, 67]
+    //                 $stok = $varian->stok()->create([
+    //                     'gudang_id' => 2,
+    //                     'nomor'     => $penerimaan->id . '-' . $varian->id . '-' . now()->format('YmdHis'),
+    //                 ]);
+
+    //                 // 7. Migrasi Detail Roll per Roll
+    //                 $oldTerimaBarangItemRoll = DB::connection('sqlite_lama')->table('jumlah_rolls')
+    //                     ->where('purchase_invoice_item_id', $item->id)
+    //                     ->get();
+
+    //                 foreach ($oldTerimaBarangItemRoll as $roll) {
+    //                     // Simpan ke Stok Fisik (ProdukDetail) [cite: 65]
+    //                     $detailFisik = $varian->details()->create([
+    //                         'gudang_id' => 2,
+    //                         'stok_id'   => $stok->id,
+    //                         'old_id'    => $roll->sale_item_id, // Tracking ID lama
+    //                         'satuan_id' => $satuan->id,
+    //                         'qty'       => $roll->panjang ?? 0,
+    //                         'status'    => $roll->status ?? 'tersedia',
+    //                     ]);
+
+    //                     // Hubungkan ke Detail Nota Pembelian [cite: 48]
+    //                     $penerimaanItem->details()->create([
+    //                         'produk_detail_id' => $detailFisik->id,
+    //                         'satuan_id'        => $satuan->id,
+    //                         'qty'              => $roll->panjang ?? 0,
+    //                         'lot_number'       => $roll->kode_roll ?? 0,
+    //                     ]);
+
+    //                     $total_panjang += $roll->panjang;
+    //                     $total_roll += 0;
+    //                 }
+    //             }
+    //         }
+    //     });
+
+    //     return redirect()->route('grosir.penerimaan.index')->with('message', 'Refaktoring Data Berhasil');
+    // }
+
     public function updateData()
     {
-        // Gunakan Transaction agar jika satu gagal, semua dibatalkan (data tidak kotor)
+
         DB::transaction(function () {
             $oldTerimaBarang = DB::connection('sqlite_lama')->table('purchase_invoices')->get();
 
             foreach ($oldTerimaBarang as $oldter) {
-                // Gunakan Model::create agar mendapatkan objek $penerimaan [cite: 40]
                 $penerimaan = Pembelian::create([
                     'supplier_id'      => $oldter->supplier_id,
                     'nomer'            => (string) Str::ulid(),
@@ -405,96 +530,131 @@ class PenerimaanController extends Controller
 
                 foreach ($oldTerimaBarangItems as $item) {
                     $oldProduct = DB::connection('sqlite_lama')->table('products')->find($item->product_id);
-
                     if (!$oldProduct) continue;
 
-                    // 1. Sinkronisasi Kategori
-                    $kategori = Kategori::firstOrCreate(
-                        ['slug' => Str::slug($oldProduct->name)],
-                        [
-                            'nama_kategori' => $oldProduct->name,
-                            'status'        => 'aktif',
-                            'deskripsi'     => ''
-                        ]
-                    );
+                    // 1-3. Sinkronisasi Kategori, Satuan, Produk (Tetap seperti kode Anda)
 
-                    // 2. Sinkronisasi Satuan
-                    $satuan = Satuan::firstOrCreate(
-                        ['nama_satuan' => $oldProduct->unit_satuan ?? 'Yard'],
-                        ['inisial' => 'Yd']
-                    );
+                    $kategori = Kategori::firstOrCreate(['slug' => Str::slug($oldProduct->name)], ['nama_kategori' => $oldProduct->name, 'status' => 'aktif']);
+                    $satuan = Satuan::firstOrCreate(['nama_satuan' => $oldProduct->unit_satuan ?? 'Yard'], ['inisial' => 'Yd']);
+                    $newProduk = Produk::firstOrCreate(['nama' => $oldProduct->name], ['kategori_id' => $kategori->id, 'satuan_id' => $satuan->id, 'status' => 'aktif']);
 
-                    // 3. Sinkronisasi Produk [cite: 52]
-                    $newProduk = Produk::firstOrCreate(
-                        ['nama' => $oldProduct->name],
-                        [
-                            'kategori_id' => $kategori->id,
-                            'satuan_id'   => $satuan->id,
-                            'deskripsi'   => $oldProduct->description,
-                            'status'      => 'aktif',
-                        ]
-                    );
+                    // 4. Sinkronisasi Varian
 
-                    // 4. Sinkronisasi Varian (Mapping ID Lama ke Varian ID) [cite: 58]
-                    $varian = ProdukVarian::firstOrCreate(
-                        ['sku' => $oldProduct->kode_barang],
-                        [
-                            'produk_id'  => $newProduk->id,
-                            'gudang_id'  => 2,
-                            'nama'       => $oldProduct->kode_warna ?? 'Default',
-                            'tipe'       => $oldProduct->tipe,
-                            'panjang'    => $oldProduct->total_lenght ?? 0,
-                            'jumlah'     => $oldProduct->jumlah_roll ?? 0,
-                            'is_paket'   => false,
-                            'harga_beli' => $oldProduct->cost_price ?? 0,
-                            'harga_jual' => $oldProduct->selling_price ?? 0,
-                        ]
-                    );
+                    $varian = ProdukVarian::find($oldProduct->id);
 
-                    // 5. Simpan Item Pembelian [cite: 43]
+                    if (!$varian) {
+                        $varian = ProdukVarian::create(
+                            [
+                                'id'        => $oldProduct->id,
+                                'sku'       => $oldProduct->slug,
+                                'produk_id'  => $newProduk->id,
+                                'gudang_id'  => 2,
+                                'nama'       => $oldProduct->kode_warna ?? 'Default',
+                                'tipe'       => $oldProduct->tipe,
+                                'panjang'    => 0,
+                                'jumlah'     => 0,
+                                'is_paket'   => false,
+                                'harga_beli' => $oldProduct->cost_price ?? 0,
+                                'harga_jual' => $oldProduct->selling_price ?? 0,
+                            ]
+                        );
+                    }
+
                     $penerimaanItem = $penerimaan->items()->create([
                         'varian_id'    => $varian->id,
                         'satuan_id'    => $satuan->id,
                         'total_qty'    => $item->total_lenght,
                         'total_jumlah' => $item->jumlah_roll,
-                        'harga_beli'   => 0,
-                        'subtotal'     => 0,
                     ]);
 
-                    // 6. Buat Header Stok (Batch) [cite: 61, 67]
                     $stok = $varian->stok()->create([
                         'gudang_id' => 2,
                         'nomor'     => $penerimaan->id . '-' . $varian->id . '-' . now()->format('YmdHis'),
                     ]);
 
-                    // 7. Migrasi Detail Roll per Roll
-                    $oldTerimaBarangItemRoll = DB::connection('sqlite_lama')->table('jumlah_rolls')
-                        ->where('purchase_invoice_item_id', $item->id)
-                        ->get();
+                    // 7. Migrasi Detail Roll & HITUNG ULANG
+                    $oldRolls = DB::connection('sqlite_lama')->table('jumlah_rolls')
+                        ->where('purchase_invoice_item_id', $item->id)->get();
 
-                    foreach ($oldTerimaBarangItemRoll as $roll) {
-                        // Simpan ke Stok Fisik (ProdukDetail) [cite: 65]
+
+                    $panjangMasuk = 0;
+                    $jumlahRollMasuk = 0;
+
+                    foreach ($oldRolls as $roll) {
+
                         $detailFisik = $varian->details()->create([
                             'gudang_id' => 2,
                             'stok_id'   => $stok->id,
-                            'old_id'    => $roll->sale_item_id, // Tracking ID lama
+                            'old_id'    => $roll->sale_item_id,
                             'satuan_id' => $satuan->id,
                             'qty'       => $roll->panjang ?? 0,
-                            'status'    => $roll->status ?? 'tersedia',
+                            'status'    => $roll->status,
                         ]);
 
-                        // Hubungkan ke Detail Nota Pembelian [cite: 48]
+                        Log::info('masukin id saleke' . $detailFisik->id . 'sale id' . $roll->sale_item_id);
+
                         $penerimaanItem->details()->create([
                             'produk_detail_id' => $detailFisik->id,
                             'satuan_id'        => $satuan->id,
                             'qty'              => $roll->panjang ?? 0,
-                            'lot_number'       => $roll->kode_roll ?? 0,
+                            'lot_number'       => $roll->kode_roll ?? '-',
                         ]);
+
+                        $panjangMasuk += ($roll->panjang ?? 0);
+                        $jumlahRollMasuk += 1; // Tiap baris di jumlah_rolls adalah 1 roll
                     }
+
+                    // UPDATE AKUMULASI DI VARIAN (PENTING)
+                    // Kita gunakan increment agar jika satu varian muncul di beberapa nota, angkanya terus bertambah
+                    $varian->increment('panjang', $panjangMasuk);
+                    $varian->increment('jumlah', $jumlahRollMasuk);
                 }
             }
         });
 
-        return redirect()->route('grosir.penerimaan.index')->with('message', 'Refaktoring Data Berhasil');
+        return redirect()->route('grosir.penerimaan.index')->with('message', 'Refaktoring Data Berhasil & Stok Sinkron');
+    }
+
+    public function comparing()
+    {
+        // 1. Ambil data baru (MySQL)
+        $dataBaru = ProdukVarian::with('produk')->get();
+
+        // 2. Ambil data lama (SQLite)
+        $dataLama = DB::connection('sqlite_lama')
+            ->table('products')
+            ->select('id', 'total_lenght', 'name', 'slug')
+            ->get()
+            ->keyBy('id');
+
+        $results = $dataBaru->map(function ($new) use ($dataLama) {
+            // Karena ID sama, get() akan langsung mengambil object yang tepat
+            $old = $dataLama->get($new->id);
+
+            $stokBaru = (float) ($new->panjang ?? 0);
+            $stokLama = $old ? (float) ($old->total_lenght ?? 0) : 0;
+            $selisih  = $stokBaru - $stokLama;
+
+            return [
+                "id"        => $new->id,
+                "nama"      => $new->produk->nama,
+                "sku_baru"  => $new->sku,
+                "stok_baru" => $stokBaru,
+                "stok_lama" => $stokLama,
+                "selisih"   => round($selisih, 2),
+                "is_sync"   => abs($selisih) < 0.1,
+                "found"     => !is_null($old)
+            ];
+        });
+
+        // OPSIONAL: Cek apakah ada data di SQLite yang belum masuk ke MySQL
+        // Ini berguna untuk memastikan migrasi sudah 100%
+        $idBaru = $dataBaru->pluck('id')->toArray();
+        $dataKetinggalan = $dataLama->forget($idBaru);
+
+        return inertia('Grosir/Comparing', [
+            'results' => $results,
+            'missing_count' => $dataKetinggalan->count()
+        ]);
     }
 }
