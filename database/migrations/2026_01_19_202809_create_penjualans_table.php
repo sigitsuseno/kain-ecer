@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nomer')->unique();
             $table->date('tanggal');
+            $table->string('bagian', 10)->default('grosir');
             $table->unsignedBigInteger('pelanggan_id');
             $table->unsignedBigInteger('marketing_id')->nullable();
             $table->decimal('total_penjualan', 19, 2)->default(0);

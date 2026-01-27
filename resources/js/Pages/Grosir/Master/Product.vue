@@ -58,19 +58,23 @@
                                 class="hover:bg-indigo-50/30 transition-colors group">
                                 <td class="px-3 py-2">
                                     <div class="font-bold text-slate-800">{{ p.produk?.nama || 'Tanpa Nama' }}</div>
-                                    <div class="text-[10px] font-mono text-slate-500 uppercase tracking-tighter">{{
+                                    <div class="text-xs font-mono text-slate-800 uppercase tracking-tighter">{{
                                         p.nama }}</div>
+                                    <!-- <div class="text-xs font-mono text-slate-800 uppercase tracking-tighter">Satuan : {{
+                                        p.produk.satuan.nama_satuan }}</div> -->
                                 </td>
                                 <td class="px-3 py-2">
                                     <div class="flex flex-wrap gap-1">
                                         <span v-for="det in p.details" :key="det.id"
-                                            class="bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded border border-blue-100 font-bold">
-                                            {{ det.qty }} Yd
+                                            class="w-12 flex items-center justify-center  bg-blue-50 text-blue-700 text-xs  py-0.5 rounded border border-blue-300 font-bold"
+                                            :class="det.status === 'terjual' ? 'text-red-500' : ''">
+                                            {{ det.qty }}
                                         </span>
                                     </div>
                                 </td>
                                 <td class="px-3 py-2 text-center font-semibold text-sm">{{ p.jumlah ?? 0 }}</td>
-                                <td class="px-3 py-2 text-center font-semibold text-sm">{{ p.panjang ?? 0 }}</td>
+                                <td class="px-3 py-2 text-center font-semibold text-sm">{{ p.panjang ?? 0 }} {{
+                                    p.produk.satuan.nama_satuan }}</td>
                                 <td class="px-3 py-2 text-right">
                                     <div class="flex justify-end gap-1">
                                         <button @click="openView(p)"

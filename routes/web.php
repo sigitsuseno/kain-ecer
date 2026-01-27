@@ -1,6 +1,7 @@
 <?php
 
 
+
 use App\Http\Controllers\Ecer\EcerController;
 use App\Http\Controllers\Ecer\PembayaranEcerController;
 use App\Http\Controllers\Ecer\PenjualanEcerController;
@@ -8,10 +9,13 @@ use App\Http\Controllers\Ecer\ProdukEcerController;
 use App\Http\Controllers\Ecer\StokController;
 use App\Http\Controllers\Ecer\TransaksiPenjualanEceranController;
 use App\Http\Controllers\Grosir\PenerimaanController;
+use App\Http\Controllers\Grosir\PenjualanGrosirController;
 use App\Http\Controllers\PrintController;
 use App\Models\Penerimaan;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+
 
 
 
@@ -250,6 +254,19 @@ Route::prefix('grosir')
         Route::prefix('penerimaan')
             ->name('penerimaan.')
             ->controller(PenerimaanController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/store', 'store')->name('store');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+                Route::get('/update-data', 'updateData')->name('update-data');
+            });
+
+        Route::prefix('penjualan')
+            ->name('penjualan.')
+            ->controller(PenjualanGrosirController::class)
             ->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/create', 'create')->name('create');

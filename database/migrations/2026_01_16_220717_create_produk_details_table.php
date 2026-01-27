@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('varian_id')->nullable();
             $table->unsignedBigInteger('stok_id')->nullable();
+            $table->unsignedBigInteger('old_id')->nullable();
             $table->unsignedBigInteger('satuan_id')->nullable();
             $table->decimal('qty', 15, 2)->default(0);
             $table->decimal('isi', 15, 2)->default(0);

@@ -1,0 +1,539 @@
+# alur database lama
+    - purchase_invoices->purchase_invoice_item
+    - product->jumlah_roll
+
+# alur baru 
+    - pembelian->pembelian_item->pembelian_item_detail
+    - produk->product_varian->produk_detail
+
+
+
+# Model Data Lama Sqlite
+## Model PurchaseInvoice.php
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class PurchaseInvoice extends Model
+{
+    protected $fillable = [
+
+        'supplier_id',
+        'supplier_invoice_no',
+        'transaction_date',
+        'payment_status',
+        'total_purchase_roll',
+        'total_purchase_length',
+        'catatan',
+    ];
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(PurchaseInvoiceItem::class, 'purchase_invoice_id');
+    }
+}```
+
+## Model PurchaseInvoiceItem.php
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class PurchaseInvoiceItem extends Model
+{
+    protected $fillable = [
+
+        'purchase_invoice_id',
+        'product_id',
+        'total_lenght',
+        'jumlah_roll',
+    ];
+
+    public function purchaseInvoice()
+    {
+        return $this->belongsTo(PurchaseInvoice::class, 'purchase_invoice_id');
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function receivedRolls()
+    {
+        return $this->hasMany(JumlahRoll::class, 'purchase_invoice_item_id');
+    }
+}```
+
+## Model Product
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+
+class Product extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = [
+        'category_id',
+        'supplier_id',
+        'kode_barang',
+        'name',
+        'slug',
+        'tipe',
+        'seri',
+        'kode_warna',
+        'description',
+        'lebar_kain',
+        'total_lenght',
+        'jumlah_roll',
+        'selling_price',
+        'cost_price',
+        'inventory_method',
+        'tracking_method',
+        'abc_category',
+        'min_stock',
+        'max_stock',
+        'safety_stock',
+        'reorder_point',
+        'tax_rate',
+        'is_active',
+        'unit_satuan',
+    ];
+
+    protected $casts = [
+        'min_stock' => 'decimal:4',
+        'max_stock' => 'decimal:4',
+        'safety_stock' => 'decimal:4',
+        'reorder_point' => 'decimal:4',
+        'cost_price' => 'decimal:4',
+        'selling_price' => 'decimal:4',
+        'tax_rate' => 'decimal:2',
+        'unit_conversion_factor' => 'decimal:4',
+        'weight' => 'decimal:4',
+        'dimensions' => 'array',
+        'has_expiry_date' => 'boolean',
+        'require_quality_check' => 'boolean',
+        'is_active' => 'boolean',
+    ];
+
+    // Relationships
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function rolls()
+    {
+        return $this->hasMany(JumlahRoll::class, 'product_id');
+    }
+
+
+    public static function createWithRules(string $name, string $kodeWarna, array $data): self
+    {
+
+        $exists = self::where('name', $name)
+            ->where('kode_warna', $kodeWarna)
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'kode_warna' => 'Warna ini sudah ada untuk produk tersebut.',
+            ]);
+        }
+
+        $data['slug'] = Str::slug($name . '-' . $kodeWarna);
+        $data['name'] = $name;
+        $data['kode_warna'] = $kodeWarna;
+
+        return self::create($data);
+    }
+
+    public function updateWithRules(string $name, string $kodeWarna, array $data): bool
+    {
+
+        $exists = self::where('name', $name)
+            ->where('kode_warna', $kodeWarna)
+            ->where('id', '!=', $this->id)
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'kode_warna' => 'Warna ini sudah ada untuk produk tersebut.',
+            ]);
+        }
+
+        $data['slug'] = Str::slug($name . '-' . $kodeWarna);
+        $data['name'] = $name;
+        $data['kode_warna'] = $kodeWarna;
+
+        return $this->update($data);
+    }
+
+    // Accessors
+    protected function grossMargin(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $selling = (float) $this->selling_price;
+                $cost = (float) $this->cost_price;
+                if ($selling > 0) {
+                    return number_format((($selling - $cost) / $selling) * 100, 2, '.', '');
+                }
+
+                return '0.00';
+            }
+        );
+    }
+
+    // Business Logic Methods
+    public function needsReorder(): bool
+    {
+        return false; // Placeholder
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeAbcCategory($query, $category)
+    {
+        return $query->where('abc_category', $category);
+    }
+
+    public function scopeLowStock($query)
+    {
+        return $query->whereColumn('reorder_point', '>=', 'safety_stock');
+    }
+
+    public function invoiceItems()
+    {
+        return $this->hasMany(PurchaseInvoiceItem::class, 'product_id');
+    }
+
+    public function inventory()
+    {
+        return $this->hasMany(Inventory::class, 'product_id');
+    }
+
+    public function stockCountingItems()
+    {
+        return $this->hasMany(StockCountingItem::class, 'product_id');
+    }
+    public  function saleItems()
+    {
+        return $this->hasMany(SaleItem::class, 'product_id');
+    }
+}```
+
+## Model JumlahRoll
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class JumlahRoll extends Model
+{
+    protected $fillable = [
+
+        'product_id',
+        'purchase_invoice_item_id',
+        'sale_item_id',
+        'return_item_id',
+        'sale_return_item_id',
+        'kode_roll',
+        'panjang',
+        'satuan',
+        'status',
+    ];
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function satuan()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_id');
+    }
+
+    public function itemInvoice()
+    {
+        return $this->belongsTo(PurchaseInvoiceItem::class, 'purchase_invoice_item_id');
+    }
+
+    public function sale_item()
+    {
+        return $this->belongsTo(SaleItem::class, 'sale_item_id');
+    }
+
+    public function return_item()
+    {
+        return $this->belongsTo(SalesReturnItem::class, 'sale_return_item_id');
+    }
+}```
+
+# Model Data baru Mysql
+
+## Pembelian
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Pembelian extends Model
+{
+    protected $fillable = [
+        'supplier_id',
+        'nomer',
+        'tanggal',
+        'supplier_id',
+        'total_pembelian',
+        'beban_ongkir',
+        'beban_biaya',
+        'status',
+        'catatan',
+    ];
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class . 'supplier_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(PembelianItems::class, 'pembelian_id');
+    }
+}```
+
+## pembelian_item
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class PembelianItems extends Model
+{
+    protected $fillable = [
+        'pembelian_id',
+        'varian_id',
+        'satuan_id',
+        'total_qty',
+        'total_jumlah',
+        'harga_beli',
+        'subtotal',
+    ];
+
+    public function pembelian()
+    {
+        return $this->belongsTo(Pembelian::class, 'pembelian_id');
+    }
+
+    public function produk()
+    {
+        return $this->hasOne(Produk::class, 'produk_id');
+    }
+
+    public function details()
+    {
+        return $this->hasMany(PembelianItemsDetails::class, 'pembelian_item_id');
+    }
+
+    public function varian()
+    {
+        return $this->belongsTo(ProdukVarian::class, 'varian_id');
+    }
+}```
+
+## PembelianItemsDetails
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class PembelianItemsDetails extends Model
+{
+    protected $table = 'pembelian_items_details';
+    protected $fillable = [
+        'pembelian_item_id',
+        'produk_detail_id',
+        'satuan_id',
+        'qty',
+        'lot_number',
+    ];
+
+    public function pembelianItem()
+    {
+        return $this->belongsTo(PembelianItems::class, 'pembelian_item_id');
+    }
+    public function satuan()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_id');
+    }
+}```
+
+
+## Product
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Produk extends Model
+{
+    protected $fillable = [
+        'nama',
+        'kategori_id',
+        'satuan_id',
+        'brand_id',
+        'deskripsi',
+        'status',
+
+    ];
+
+    public function varian()
+    {
+        return $this->hasMany(ProdukVarian::class, 'produk_id');
+    }
+
+    public function kategori()
+    {
+        return $this->belongsTo(Kategori::class, 'kategori_id');
+    }
+
+    public function satuan()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_id');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+    public function gudang()
+    {
+        return $this->belongsTo(Gudang::class, 'gudang_id');
+    }
+}
+```
+
+## ProdukVarian
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ProdukVarian extends Model
+{
+    protected $fillable = [
+        'produk_id',
+        'gudang_id',
+        'nama',
+        'tipe',
+        'panjang',
+        'tinggi',
+        'lebar',
+        'tebal',
+        'jumlah',
+        'sku',
+        'is_paket',
+        'harga_beli',
+        'harga_jual',
+    ];
+
+    public function produk()
+    {
+        return $this->belongsTo(Produk::class, 'produk_id');
+    }
+    public function stok()
+    {
+        return $this->hasOne(Stok::class, 'varian_id');
+    }
+
+    public function details()
+    {
+        return $this->hasMany(ProdukDetail::class, 'varian_id');
+    }
+    public function konversi()
+    {
+        return $this->hasMany(KonversiSatuan::class, 'satuan_id');
+    }
+    public function purcItem()
+    {
+        return $this->hasOne(PembelianItems::class, 'varian_id');
+    }
+}
+```
+## ProdukDetail
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ProdukDetail extends Model
+{
+    protected $fillable = [
+        'varian_id',
+        'stok_id',
+        'satuan_id',
+        'qty',
+        'isi',
+        'status',
+    ];
+
+    public function varian()
+    {
+        return $this->belongsTo(ProdukVarian::class, 'varian_id');
+    }
+
+    public function stok()
+    {
+        return $this->belongsTo(Stok::class, 'stok_id');
+    }
+
+    public function satuan()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_id');
+    }
+}
+```php

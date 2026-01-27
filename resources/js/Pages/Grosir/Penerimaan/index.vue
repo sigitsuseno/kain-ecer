@@ -5,7 +5,7 @@
                 <i class='bx bxs-package'></i> <span>Riwayat Penerimaan Barang</span>
             </div>
             <div class="flex items-center gap-4">
-                <Link href="/grosir/penerimaan/create"
+                <Link href="/grosir/penerimaan/update-data"
                     class="px-4 h-9 flex items-center gap-2 text-sm bg-indigo-600 hover:bg-indigo-700 active:scale-90 text-white rounded shadow-md transition-all">
                     <i class='bx bx-plus'></i>
                     UPDATE DATA
@@ -74,8 +74,9 @@
                                             </div>
                                             <div class="flex flex-wrap gap-1 mt-1">
                                                 <span v-for="det in it.details" :key="det.id"
-                                                    class="text-[10px] px-1.5 py-0.5 bg-gray-100  rounded shadow-sm">
-                                                    {{ det.qty }} {{ det.satuan?.inisial }}
+                                                    class="w-12 flex items-center justify-center text-xs  py-0.5 bg-gray-100 rounded shadow-sm border"
+                                                    :class="det.status === 'terjual' ? 'text-red-500' : ''">
+                                                    {{ det.qty }}
                                                 </span>
                                             </div>
                                         </div>
@@ -137,6 +138,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
+import Swal from 'sweetalert2';
 
 const props = defineProps({
     pembelians: Object,
@@ -148,17 +150,47 @@ const params = ref({
     per_page: props.filters.per_page || '10'
 });
 
+
+// --- FUNGSI DELETE ---
+const deleteNota = (id, nomer) => {
+    Swal.fire({
+        title: 'Hapus Nota?',
+        text: `Apakah Anda yakin ingin menghapus nota ${nomer}? Tindakan ini akan mengembalikan (mengurangi) stok yang sudah masuk secara otomatis.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            return new Promise((resolve) => {
+                router.delete(`/grosir/penerimaan/${id}`, {
+                    onSuccess: () => {
+                        Swal.fire('Terhapus!', 'Nota dan stok terkait berhasil dihapus.', 'success');
+                        resolve();
+                    },
+                    onError: () => {
+                        Swal.fire('Gagal!', 'Terjadi kesalahan saat menghapus data.', 'error');
+                        resolve();
+                    }
+                });
+            });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    });
+};
+
 // Fungsi debounce manual tanpa lodash
 let timeout = null;
-
 watch(params, (newParams) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
         router.get('/grosir/penerimaan', newParams, {
             preserveState: true,
             replace: true,
-            preserveScroll: true, // Agar scroll tidak balik ke atas
+            preserveScroll: true,
         });
-    }, 500); // Tunggu 500ms setelah user berhenti mengetik
+    }, 500);
 }, { deep: true });
 </script>>
