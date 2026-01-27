@@ -3,15 +3,48 @@
 namespace App\Http\Controllers\Grosir;
 
 use App\Http\Controllers\Controller;
+use App\Models\Gudang;
 use App\Models\Kategori;
+use App\Models\Pelanggan;
 use App\Models\Produk;
 use App\Models\ProdukVarian;
+use App\Models\Satuan;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class ProdukGrosirController extends Controller
 {
+    public function index(Request $request)
+    {
+        // Ambil per_page dari request, default ke 10
+        $perPage = $request->input('per_page', 10);
+
+        $products = ProdukVarian::with(['produk.satuan', 'produk.kategori', 'details.satuan'])
+            ->when($request->search, function ($q) use ($request) {
+                $q->where('nama', 'like', "%{$request->search}%")
+                    ->orWhereHas('produk', function ($query) use ($request) {
+                        $query->where('nama', 'like', "%{$request->search}%");
+                    });
+            })
+            ->when($request->kategori, fn($q) => $q->where('kategori_id', $request->kategori))
+            ->orderBy('id', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return Inertia::render('Grosir/Master/Product', [
+            'products' => $products,
+            'filters' => $request->only(['search', 'per_page']), // Baris ini PENTING
+            'categories' => Kategori::orderBy('id', 'asc')->get(),
+            'gudangs' => Gudang::orderBy('nama_gudang')->get(),
+            'varian' => ProdukVarian::orderBy('nama')->get(),
+            'satuan' => Satuan::all(),
+        ]);
+    }
 
     public function colorsByName(Request $request)
     {
@@ -20,53 +53,76 @@ class ProdukGrosirController extends Controller
         ]);
 
         return Produk::where('nama_produk', $request->nama_produk)
-            ->pluck('kode_warna');
+            ->pluck('nama');
     }
 
     public function store(Request $request)
     {
         $request->validate([
             "nama_produk" => 'required|string|max:255',
-            "kode_warna" => 'required|string|max:255',
-            "satuan_id" => 'required',
-            "tipe" => 'required|string|max:255',
-            "lebar_kain" => 'nullable|string|max:255',
-            "deskripsi" => 'nullable',
+            "kode_warna"  => 'required|string|max:255',
+            "satuan_id"   => 'required',
+            "tipe"        => 'required|string|max:255',
+            "lebar_kain"  => 'nullable|string|max:255',
+            "panjang"     => 'nullable|numeric',
+            "deskripsi"   => 'nullable',
         ]);
 
         // dd($request);
-        $namaProdukClean = trim(ucwords(strtolower($request->nama_produk)));
 
-        $kategori = Kategori::firstOrCreate(
-            ['slug' => Str::slug($namaProdukClean)],
-            ['nama_kategori' => $namaProdukClean, 'status' => 'nama']
-        );
+        try {
+            DB::beginTransaction();
 
-        $kategoriId = $kategori->id;
-
-        $produk = Produk::create([
-            'nama_produk' => $request->nama_produk,
-            'kategori_id' => $kategoriId,
-            'satuan_id' => $request->satuan_id,
-            'deskripsi' => $request->deskripsi,
-        ]);
-
-        ProdukVarian::create([
-            'produk_id' => $produk->id,
-            'gudang_id' => 1,
-            'nama_varian' => $request->kode_warna,
-            'tipe' => $request->tipe,
-            'lebar' => $request->lebar_kain ?? 0,
-        ]);
+            $namaProdukClean = trim(ucwords(strtolower($request->nama_produk)));
 
 
-        return back()->with('success', 'Produk berhasil ditambahkan');
+            $kategori = Kategori::firstOrCreate(
+                ['slug' => Str::slug($namaProdukClean)],
+                ['nama_kategori' => $namaProdukClean, 'status' => 'nama']
+            );
+
+            // 2. Kelola Produk Header
+            $produk = Produk::firstOrCreate(
+                ['nama' => $namaProdukClean, 'kategori_id' => $kategori->id],
+                [
+                    'satuan_id' => $request->satuan_id,
+                    'deskripsi' => $request->deskripsi,
+                ]
+            );
+
+            // 3. Kelola Varian Produk
+            $varian = ProdukVarian::firstOrCreate(
+                [
+                    'produk_id' => $produk->id,
+                    'nama' => $request->kode_warna
+                ],
+                [
+                    'gudang_id' => 1,
+                    'tipe'      => $request->tipe,
+                    'lebar'     => $request->lebar_kain ?? 0,
+                    'panjang'   => $request->panjang ?? 0,
+                    'tinggi'    => 0,
+                    'tebal'     => 0,
+                    'sku'       => 'SKU-' . strtoupper(Str::random(6)),
+                    'is_paket'  => false,
+                    'harga_beli' => 0,
+                    'harga_jual' => 0,
+                ]
+            );
+
+            DB::commit();
+            return back()->with('success', 'Produk dan Varian berhasil disimpan');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Gagal simpan produk: " . $e->getMessage());
+            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
+        }
     }
 
     public function update(Request $request, $id)
     {
-
-        $varian = ProdukVarian::with('produk')->findOrFail($id);
+        // 1. Ambil data dengan relasi lengkap agar efisien
+        $varian = ProdukVarian::with(['produk', 'stok', 'details'])->findOrFail($id);
         $produkInduk = $varian->produk;
 
         // 2. Validasi
@@ -77,28 +133,45 @@ class ProdukGrosirController extends Controller
             "lebar_kain"  => 'nullable|numeric',
         ]);
 
-        // 3. Logic Kategori (Tetap seperti milik Anda)
+        // 3. Logic Kategori
         $namaProdukClean = trim(ucwords(strtolower($request->nama_produk)));
         $kategori = Kategori::firstOrCreate(
             ['slug' => Str::slug($namaProdukClean)],
             ['nama_kategori' => $namaProdukClean, 'status' => 'nama']
         );
 
-        // 4. UPDATE Produk Induk (Level 1)
+        // 4. UPDATE Produk Induk
         $produkInduk->update([
-            'nama_produk' => $request->nama_produk,
+            'nama' => $request->nama_produk,
             'kategori_id' => $kategori->id,
             'satuan_id'   => $request->satuan_id,
             'deskripsi'   => $request->deskripsi,
         ]);
 
-        // 5. UPDATE Varian (Level 2)
+        // 5. UPDATE Varian
         $varian->update([
-            'nama_varian' => $request->kode_warna, // Pastikan nama kolom di DB 'nama_varian' atau 'kode_warna'
+            'nama' => $request->kode_warna,
             'tipe'        => $request->tipe,
             'lebar'       => $request->lebar_kain ?: 0,
+            'panjang' => $request->panjang ?? 0,
         ]);
 
+
+
         return back()->with('success', 'Produk dan Varian berhasil diperbarui');
+    }
+
+    public function destroy($id)
+    {
+        $varian = ProdukVarian::findOrFail($id);
+
+        // Opsional: Cek apakah masih ada stok atau detail produk
+        if ($varian->details()->count() > 0) {
+            return back()->with('error', 'Produk tidak bisa dihapus karena sudah memiliki data stok.');
+        }
+
+        $varian->delete();
+
+        return back()->with('message', 'Produk berhasil dihapus');
     }
 }

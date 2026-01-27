@@ -11,7 +11,9 @@ class CategoryGrosirController extends Controller
 {
     public function index()
     {
-        return inertia('Grosir/Master/Category');
+        return inertia('Grosir/Master/Kategori', [
+            'categories' => Kategori::orderBy('id', 'asc')->get(),
+        ]);
     }
 
     public function store(Request $request)

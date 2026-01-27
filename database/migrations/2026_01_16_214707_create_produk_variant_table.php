@@ -21,6 +21,7 @@ return new class extends Migration
             $table->decimal('lebar', 15, 2)->default(0);
             $table->decimal('tinggi', 15, 2)->default(0);
             $table->decimal('tebal', 15, 2)->default(0);
+            $table->decimal('jumlah', 15, 2)->default(0);
             $table->string('sku')->nullable()->unique();
             $table->boolean('is_paket')->default(false);
             $table->decimal('harga_beli', 19, 2)->default(0);

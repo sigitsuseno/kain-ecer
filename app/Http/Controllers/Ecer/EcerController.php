@@ -40,7 +40,7 @@ class EcerController extends Controller
 
         return Inertia::render('Ecer/Master', [
             'products' => $products,
-            'categories' => Kategori::where('status', 'np')->get(),
+            'categories' => Kategori::orderBy('id', 'asc')->get(),
             'gudangs' => Gudang::orderBy('nama_gudang')->get(),
             'semua_produk' => Produk::all(),
             'suppliers' => Supplier::orderBy('id')->get(),

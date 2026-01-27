@@ -7,6 +7,13 @@ use Illuminate\Http\Request;
 
 class SupplierGrosirController extends Controller
 {
+    public function index()
+    {
+        return inertia('Grosir/Master/Supplier', [
+            'suppliers' => \App\Models\Supplier::orderBy('id', 'asc')->get(),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

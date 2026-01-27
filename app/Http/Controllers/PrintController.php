@@ -21,10 +21,10 @@ class PrintController extends Controller
             // --- HEADER ---
             $printer->setJustification(Printer::JUSTIFY_CENTER);
             $printer->selectPrintMode(Printer::MODE_DOUBLE_WIDTH);
-            $printer->text("TOKO KAIN ECER\n");
+            $printer->text("UTEXT\n");
             $printer->selectPrintMode();
-            $printer->text("Jl. Tekstil Utama No. 88, Semarang\n");
-            $printer->text("Telp: 024-12345678\n");
+            $printer->text("Jl. Musi No.12, RT.05/RW.02\n");
+            $printer->text(" Sidomulyo, Kec. Ungaran Tim., Kab. Semarang\n");
             $printer->text(str_repeat("-", 42) . "\n");
 
             // --- INFO NOTA ---

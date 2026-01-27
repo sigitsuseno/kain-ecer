@@ -45,6 +45,7 @@
                                 <td class="p-3">
                                     <div class="font-bold text-primary">{{ item.nama_produk }}</div>
                                     <div class="text-xs text-gray-800">{{ item.kode_warna }}</div>
+                                    <!-- <div class="text-xs text-gray-800">{{ item.satuan_id }}</div> -->
                                 </td>
 
                                 <td class="p-3">
@@ -89,7 +90,7 @@
             </form>
         </div>
 
-        <div class="w-full bg-white border-l shadow-2xl flex flex-col">
+        <div class="w-full bg-slate-200 border-l shadow-2xl flex flex-col">
             <div class="flex h-12 border-b">
                 <button @click="sideTab = 'cari'"
                     :class="sideTab === 'cari' ? 'border-b-2 border-primary text-primary font-bold' : 'text-gray-400'"
@@ -109,30 +110,29 @@
 
                 <div class="flex-1 overflow-y-auto space-y-2 pr-1">
                     <div v-for="p in filteredProducts" :key="p.id" @click="addProduct(p)"
-                        class="p-3 border rounded-xl hover:bg-blue-50 cursor-pointer transition group border-gray-100 shadow-sm">
+                        class="p-3 border bg-white rounded-xl hover:bg-blue-50 cursor-pointer transition group border-gray-100 shadow-sm">
                         <div class="flex justify-between items-start">
-                            <span class="font-bold text-gray-800 text-sm">{{ p.produk.nama_produk }}</span>
+                            <span class="font-bold text-gray-800 text-sm">{{ p.produk.nama }}</span>
                             <span class="text-[10px] bg-primary/10 text-primary px-2 rounded-full">
                                 {{ p.tipe || 'No Type' }}
                             </span>
                         </div>
-                        <div class="text-xs text-gray-500 mt-1">Warna: <span class="text-primary font-medium">{{
-                            p.nama_varian }}</span></div>
-                        <div class="flex justify-between mt-2 text-[10px] text-gray-400 border-t pt-2">
-                            <span>Stok: {{ p.total_qty || 0 }} Roll</span>
+                        <div class="text-sm text-blue-900 mt-1 flex items-center justify-between">Warna: {{
+                            p.nama }}
+
                             <i
                                 class='bx bx-plus-circle text-lg text-primary opacity-0 group-hover:opacity-100 transition'></i>
                         </div>
+                        <!-- <div class="flex justify-between mt-2 text-[10px] text-gray-400 border-t pt-2">
+                            <span>Stok: {{ p.total_qty || 0 }} Roll</span>
+                        </div> -->
                     </div>
                 </div>
             </div>
 
-            <div v-if="sideTab === 'buat'" class="p-6">
-                <div class="text-center py-10">
-                    <i class='bx bx-edit-alt text-5xl text-gray-200'></i>
-                    <p class="text-sm text-gray-500 mt-2">Form pembuatan produk baru (Level 1 & 2) diletakkan di sini.
-                    </p>
-                </div>
+            <div v-if="sideTab === 'buat'">
+                <ProdukOffsideTab :product="produk_by_color" :varian="produk" :satuan="satuan"
+                    :categories="categories" />
             </div>
         </div>
     </div>
@@ -142,10 +142,14 @@
 import { ref, computed } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import Swal from 'sweetalert2';
+import ProdukOffsideTab from '../../../Components/Grosir/ProdukOffsideTab.vue';
 
 const props = defineProps({
     produk_by_color: Object, // Dari Laravel Paginate [cite: 51]
-    nomer_pembelian: String // Contoh: INV012026SS- [cite: 51]
+    nomer_pembelian: String, // Contoh: INV012026SS- [cite: 51]
+    produk: Array,
+    satuan: Array,
+    categories: Array
 });
 
 const sideTab = ref('cari');
@@ -164,8 +168,8 @@ const filteredProducts = computed(() => {
     if (!searchQuery.value) return list;
 
     return list.filter(p =>
-        p.produk.nama_produk.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        p.nama_varian.toLowerCase().includes(searchQuery.value.toLowerCase())
+        p.produk.nama.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        p.nama.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
 });
 
@@ -175,12 +179,13 @@ const addProduct = (varian) => {
     if (!exists) {
         form.items.push({
             varian_id: varian.id,
-            nama_produk: varian.produk.nama_produk,
-            kode_warna: varian.nama_varian,
+            nama_produk: varian.produk.nama,
+            kode_warna: varian.nama,
+            satuan_id: varian.produk.satuan_id,
             tipe: varian.tipe,
             details: []
         });
-        console.log(varian.nama_varian);
+        console.log(varian.nama);
     }
 
 };

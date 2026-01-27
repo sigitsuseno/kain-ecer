@@ -1,15 +1,19 @@
 <?php
 
+
 use App\Http\Controllers\Ecer\EcerController;
 use App\Http\Controllers\Ecer\PembayaranEcerController;
 use App\Http\Controllers\Ecer\PenjualanEcerController;
 use App\Http\Controllers\Ecer\ProdukEcerController;
+use App\Http\Controllers\Ecer\StokController;
 use App\Http\Controllers\Ecer\TransaksiPenjualanEceranController;
 use App\Http\Controllers\Grosir\PenerimaanController;
 use App\Http\Controllers\PrintController;
 use App\Models\Penerimaan;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+
 
 
 
@@ -169,6 +173,16 @@ Route::prefix('ecer')
                         Route::get('/print/{id}', 'showPrint')->name('print');
                     });
             });
+
+        Route::prefix('stok')
+            ->name('stok.')
+            ->controller(StokController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/', 'store')->name('store');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+            });
     });
 
 // Admin Grosir Dashboard
@@ -180,11 +194,13 @@ Route::prefix('grosir')
         Route::prefix('master')
             ->name('master.')
             ->group(function () {
+
+                Route::get('/', [\App\Http\Controllers\Grosir\MasterGrosirController::class, 'index'])->name('products.index');
                 Route::prefix('products')
                     ->name('products.')
                     ->controller(\App\Http\Controllers\Grosir\ProdukGrosirController::class)
                     ->group(function () {
-
+                        Route::get('/', 'index')->name('index');
                         Route::post('/', 'store')->name('store');
                         Route::put('/{produk}', 'update')->name('update');
                         Route::delete('/{produk}', 'destroy')->name('destroy');
@@ -195,6 +211,7 @@ Route::prefix('grosir')
                     ->name('categories.')
                     ->controller(\App\Http\Controllers\Grosir\CategoryGrosirController::class)
                     ->group(function () {
+                        Route::get('/', 'index')->name('index');
                         Route::post('/', 'store')->name('store');
                         Route::put('/{id}', 'update')->name('update');
                         Route::delete('/{id}', 'destroy')->name('destroy');
@@ -202,8 +219,9 @@ Route::prefix('grosir')
 
                 Route::prefix('suppliers')
                     ->name('suppliers.')
-                    ->controller(\App\Http\Controllers\Master\SupplierController::class)
+                    ->controller(\App\Http\Controllers\Grosir\SupplierGrosirController::class)
                     ->group(function () {
+                        Route::get('/', 'index')->name('index');
                         Route::post('/', 'store')->name('store');
                         Route::put('/{id}', 'update')->name('update');
                         Route::delete('/{id}', 'destroy')->name('destroy');
@@ -211,8 +229,9 @@ Route::prefix('grosir')
 
                 Route::prefix('pelanggan')
                     ->name('pelanggan.')
-                    ->controller(\App\Http\Controllers\Master\PelangganController::class)
+                    ->controller(\App\Http\Controllers\Grosir\PelangganGrosirController::class)
                     ->group(function () {
+                        Route::get('/', 'index')->name('index');
                         Route::post('/', 'store')->name('store');
                         Route::put('/{id}', 'update')->name('update');
                         Route::delete('/{id}', 'destroy')->name('destroy');
@@ -220,8 +239,9 @@ Route::prefix('grosir')
 
                 Route::prefix('gudang')
                     ->name('gudang.')
-                    ->controller(\App\Http\Controllers\Master\GudangController::class)
+                    ->controller(\App\Http\Controllers\Grosir\GudangGrosirController::class)
                     ->group(function () {
+                        Route::get('/', 'index')->name('index');
                         Route::post('/', 'store')->name('store');
                         Route::put('/{id}', 'update')->name('update');
                         Route::delete('/{id}', 'destroy')->name('destroy');

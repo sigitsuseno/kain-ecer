@@ -15,6 +15,7 @@ class ProdukVarian extends Model
         'tinggi',
         'lebar',
         'tebal',
+        'jumlah',
         'sku',
         'is_paket',
         'harga_beli',

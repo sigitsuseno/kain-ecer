@@ -17,6 +17,7 @@
     "dependencies": {
         "@inertiajs/vue3": "^2.3.4",
         "@vitejs/plugin-vue": "^6.0.3",
+        "html-to-image": "^1.11.13",
         "sweetalert2": "^11.26.17"
     }
 }

@@ -10,22 +10,30 @@ class PenjualanEcerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Penjualan::with([
-            'pelanggan',
-            'marketing',
-            'items.varian.produk',
-            'items.details'
-        ]);
+        $perPage = $request->integer('perPage', 10);
 
-        // Tambahkan filter search sederhana jika dibutuhkan
-        if ($request->search) {
-            $query->where('nomer', 'like', "%{$request->search}%")
-                ->orWhereHas('pelanggan', function ($q) use ($request) {
-                    $q->where('nama', 'like', "%{$request->search}%");
-                });
+        $query = Penjualan::query()
+            ->with([
+                'pelanggan:id,nama',
+                'marketing:id,nama',
+            ]);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('nomer', 'like', "%{$search}%")
+                    ->orWhereHas('pelanggan', function ($qp) use ($search) {
+                        $qp->where('nama', 'like', "%{$search}%");
+                    });
+            });
         }
+
         return inertia('Ecer/Penjualan', [
-            'penjualan' => $query->latest()->get(),
+            'penjualan' => $query
+                ->latest()
+                ->paginate($perPage)
+                ->withQueryString(),
         ]);
     }
 }

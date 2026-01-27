@@ -45,32 +45,50 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-4">
-                <div class="min-w-2xl bg-white rounded shadow-sm overflow-hidden">
+                <div class="min-w-2xl bg-white rounded shadow-sm overflow-auto">
                     <div
-                        class="grid grid-cols-[50px_180px_1fr_150px_150px_120px_100px] items-center text-center bg-blue-900 text-white font-semibold text-xs uppercase">
+                        class="grid grid-cols-[50px_150px_1fr_150px_150px_120px_100px] items-center text-center bg-blue-900 text-white font-semibold text-xs uppercase">
                         <div class="py-3 border-r border-white/10">No.</div>
                         <div class="py-3 border-r border-white/10 text-left px-4">Nomer Nota</div>
                         <div class="py-3 border-r border-white/10 text-left px-4">Pelanggan</div>
-                        <div class="py-3 border-r border-white/10 text-left px-4">Marketing</div>
+                        <div class="py-3 border-r border-white/10 text-left px-4">PJ</div>
                         <div class="py-3 border-r border-white/10">Nominal</div>
                         <div class="py-3 border-r border-white/10">Status</div>
                         <div class="py-3">Aksi</div>
                     </div>
 
-                    <div v-for="(pnj, index) in penjualan" :key="pnj.id"
-                        class="grid grid-cols-[50px_180px_1fr_150px_150px_120px_100px] items-center text-center border-b hover:bg-slate-50 transition-colors">
-                        <div class="py-3 text-xs text-slate-400 font-mono">{{ index + 1 }}</div>
-                        <div class="py-3 px-4 text-left font-bold text-blue-700 text-xs">{{ pnj.nomer }}</div>
-                        <div class="py-3 px-4 text-left text-xs uppercase">{{ pnj.pelanggan?.nama || 'Umum' }}</div>
-                        <div class="py-3 px-4 text-left text-xs italic">{{ pnj.marketing?.nama || '-' }}</div>
-                        <div class="py-3 text-xs font-bold">{{ format(pnj.total_penjualan) }}</div>
+                    <div v-for="(pnj, index) in penjualan.data" :key="pnj.id"
+                        class="grid grid-cols-[50px_150px_1fr_150px_150px_120px_100px] items-center text-center border-b hover:bg-slate-50">
+                        <div class="py-3 text-xs text-slate-400 font-mono">
+                            {{ penjualan.from + index }}
+                        </div>
+
+                        <div class="py-3 px-4 text-left font-bold text-blue-700 text-xs">
+                            {{ pnj.nomer }}
+                        </div>
+
+                        <div class="py-3 px-4 text-left text-xs uppercase">
+                            {{ pnj.pelanggan?.nama ?? 'Umum' }}
+                        </div>
+
+                        <div class="py-3 px-4 text-left text-xs italic">
+                            {{ pnj.marketing?.nama ?? '-' }}
+                        </div>
+
+                        <div class="py-3 text-xs font-bold text-right">
+                            {{ format(pnj.total_penjualan) }}
+                        </div>
+
                         <div class="py-3 flex justify-center">
-                            <span
-                                class="px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-[10px] font-bold border border-red-200">
+                            <span :class="[
+                                'px-2 py-0.5 rounded-full text-[10px] font-bold border',
+                                statusClass(pnj.status)
+                            ]">
                                 {{ pnj.status }}
                             </span>
                         </div>
-                        <div class="py-3 flex justify-center">
+
+                        <div class="py-3 flex justify-center gap-1">
                             <Link v-if="pnj.status === 'UNPAID'" :href="`/ecer/penjualan/pembayaran/${pnj.id}`"
                                 class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
                                 BAYAR
@@ -92,42 +110,81 @@
                         </div>
                     </div>
 
-                    <div v-if="penjualan.length === 0" class="p-10 text-center text-slate-400 italic">
-                        Tidak ada data penjualan UNPAID.
+                    <div v-if="penjualan.data.length === 0" class="p-10 text-center text-slate-400 italic">
+                        Tidak ada data penjualan.
                     </div>
                 </div>
+                <div class="flex justify-end mt-4" v-if="penjualan.last_page > 1">
+                    <div class="flex gap-1">
+
+                        <Link v-if="penjualan.prev_page_url" :href="penjualan.prev_page_url"
+                            class="px-3 py-1 text-xs border rounded hover:bg-slate-100">
+                            ← Prev
+                        </Link>
+
+                        <span class="px-3 py-1 text-xs border rounded bg-blue-600 text-white">
+                            {{ penjualan.current_page }}
+                        </span>
+
+                        <Link v-if="penjualan.next_page_url" :href="penjualan.next_page_url"
+                            class="px-3 py-1 text-xs border rounded hover:bg-slate-100">
+                            Next →
+                        </Link>
+
+                    </div>
+                </div>
+
+
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { reactive, watch } from 'vue'
+import { Link, router } from '@inertiajs/vue3'
 
 const props = defineProps({
-    penjualan: Array, // Karena di controller menggunakan ->get(), maka ini Array
+    penjualan: Object,
 })
+
+// Mengambil nilai filter dari URL saat ini
+const urlParams = new URLSearchParams(window.location.search);
 
 const filter = reactive({
-    search: '',
-    perPage: '25',
+    search: urlParams.get('search') ?? '',
+    perPage: urlParams.get('perPage') ?? 10,
 })
-
-const format = (n) => new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0
-}).format(n || 0)
 
 const submitSearch = () => {
     router.get(route('ecer.penjualan.index'), filter, {
         preserveState: true,
-        replace: true
+        replace: true,
     })
 }
 
+// Opsional: Otomatis search saat perPage diganti
+watch(() => filter.perPage, () => {
+    submitSearch();
+});
+
 const openCreate = () => {
     router.visit(route('ecer.penjualan.transaksi.index'))
+}
+
+const format = (n) =>
+    new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(n || 0)
+
+const statusClass = (status) => {
+    const classes = {
+        UNPAID: 'bg-red-100 text-red-600 border-red-200',
+        DP: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+        LUNAS: 'bg-green-100 text-green-700 border-green-200',
+    };
+    return classes[status] ?? 'bg-slate-100 text-slate-500';
 }
 </script>

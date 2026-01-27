@@ -4,7 +4,12 @@
             <div class="flex items-center gap-3">
                 <i class='bx bxs-package'></i> <span>Riwayat Penerimaan Barang</span>
             </div>
-            <div>
+            <div class="flex items-center gap-4">
+                <Link href="/grosir/penerimaan/create"
+                    class="px-4 h-9 flex items-center gap-2 text-sm bg-indigo-600 hover:bg-indigo-700 active:scale-90 text-white rounded shadow-md transition-all">
+                    <i class='bx bx-plus'></i>
+                    UPDATE DATA
+                </Link>
                 <Link href="/grosir/penerimaan/create"
                     class="px-4 h-9 flex items-center gap-2 text-sm bg-indigo-600 hover:bg-indigo-700 active:scale-90 text-white rounded shadow-md transition-all">
                     <i class='bx bx-plus'></i>
@@ -35,9 +40,9 @@
                 <div class="w-full overflow-x-auto">
                     <table class="w-full text-sm border-collapse">
                         <thead>
-                            <tr class="bg-gray-50 text-gray-600 uppercase text-xs">
-                                <th class="px-2 py-1 text-left border-b w-12">#</th>
-                                <th class="px-2 py-1 text-left border-b">No. Nota</th>
+                            <tr class="bg-gray-20 bg-slate-200 text-gray-800 uppercase text-xs">
+                                <th class="px-2 py-1 text-left border-b w-10">#</th>
+                                <th class="px-2 py-1 text-left border-b w-40">No. Nota</th>
                                 <th class="px-2 py-1 text-left border-b">Ringkasan Produk</th>
                                 <th class="px-2 py-1 text-center border-b">Total Roll</th>
                                 <th class="px-2 py-1 text-center border-b">Total Panjang</th>
@@ -45,61 +50,66 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            <tr v-for="(p, index) in pembelians.data" :key="p.id"
-                                class="hover:bg-blue-50/50 transition">
-                                <td class="px-2 py-1 text-gray-500">{{ (pembelians.current_page - 1) *
-                                    pembelians.per_page + index + 1 }}</td>
-                                <td class="px-2 py-1 font-bold text-primary">
-                                    <div class="flex flex-col">
-                                        <span>
-                                            {{ p.nomer_pembelian }}
-                                        </span>
-                                        {{ p.tanggal_transaksi }}
-                                    </div>
-                                </td>
-                                <td class="px-2 py-1">
-                                    <div class="flex flex-col gap-1">
-                                        <div class="space-y-2">
-                                            <div v-for="item in p.items.slice(0, 2)" :key="item.id"
-                                                class="text-[11px] bg-gray-100 px-2 py-0.5 rounded text-gray-600 ">
-                                                <div class="text-sm bg-semibold text-black underline">{{
-                                                    item.varian?.produk?.nama_produk }} - {{
-                                                        item.varian?.nama_varian }}
-                                                </div>
-                                                <div class="flex flex-wrap gap-2">
-                                                    <div v-for="detail in item.details" :key="detail.id">
-                                                        <span class="w-16">{{ detail.qty }}</span>
-                                                    </div>
-                                                </div>
+                            <template v-for="(p, pIndex) in pembelians.data" :key="p.id">
+                                <tr v-for="(it, itIndex) in p.items" :key="it.id"
+                                    class="hover:bg-blue-50/50 transition border border-slate-400">
 
-                                                <span v-if="p.items.length > 2"
-                                                    class="text-[10px] text-gray-400 italic">+{{
-                                                        p.items.length - 2 }} produk lainnya</span>
+                                    <td v-if="itIndex === 0" :rowspan="p.items.length"
+                                        class="px-2 py-2 text-gray-500 align-top text-center border border-slate-400">
+                                        {{ (pembelians.current_page - 1) * pembelians.per_page + pIndex + 1 }}
+                                    </td>
+
+                                    <td v-if="itIndex === 0" :rowspan="p.items.length"
+                                        class="px-2 py-2 font-bold text-primary align-top border border-slate-400">
+                                        <div class="flex flex-col">
+                                            <span class="text-sm">{{ p.nomer }}</span>
+                                            <span class="text-xs text-gray-600 font-normal">{{ p.tanggal }}</span>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-2 py-2 ">
+                                        <div class="flex flex-col">
+                                            <div class="font-bold text-gray-800">
+                                                {{ it.varian?.produk?.nama }} - {{ it.varian?.nama }}
+                                            </div>
+                                            <div class="flex flex-wrap gap-1 mt-1">
+                                                <span v-for="det in it.details" :key="det.id"
+                                                    class="text-[10px] px-1.5 py-0.5 bg-gray-100  rounded shadow-sm">
+                                                    {{ det.qty }} {{ det.satuan?.inisial }}
+                                                </span>
                                             </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="px-2 py-1 text-center font-bold text-indigo-600">{{ p.total_jumlah_qty }} Rl
-                                </td>
-                                <td class="px-2 py-1 text-center font-bold text-blue-600">{{ p.total_jumlah_panjang }}
-                                    Yd
-                                </td>
+                                    </td>
 
-                                <td class="px-2 py-1 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button class="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
-                                            title="Detail">
-                                            <i class='bx bx-show text-lg'></i>
-                                        </button>
-                                        <button class="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                                            title="Hapus">
-                                            <i class='bx bx-trash text-lg'></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                    <td class="px-2 py-2 text-center font-bold text-indigo-600 ">
+                                        {{ it.total_jumlah }} Roll
+                                    </td>
+
+                                    <td class="px-2 py-2 text-center font-bold text-blue-600 ">
+                                        {{ it.total_qty }} Yd
+                                    </td>
+
+                                    <td v-if="itIndex === 0" :rowspan="p.items.length"
+                                        class="px-2 py-2 text-center border-l align-top border border-slate-400">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <Link :href="`/grosir/penerimaan/${p.id}/edit`"
+                                                class="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                                                title="Edit / Detail">
+                                                <i class='bx bx-edit text-lg'></i>
+                                            </Link>
+
+                                            <button @click="deleteNota(p.id, p.nomer)"
+                                                class="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                                                title="Hapus">
+                                                <i class='bx bx-trash text-lg'></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+
                             <tr v-if="pembelians.data.length === 0">
-                                <td colspan="8" class="px-4 py-10 text-center text-gray-400 italic">Data tidak ditemukan
+                                <td colspan="6" class="px-4 py-10 text-center text-gray-400 italic">Data tidak ditemukan
                                 </td>
                             </tr>
                         </tbody>

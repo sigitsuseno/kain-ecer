@@ -1,7 +1,7 @@
 <template>
     <div id="forOffset" class="w-full h-screen bg-slate-100 text-slate-800">
         <header class="h-10 px-4 flex items-center justify-between bg-white border-b print:hidden">
-            <Link href="/ecer/penjualan/transaksi/list"
+            <Link href="/ecer/penjualan"
                 class="px-3 h-7 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 text-sm transition">
                 Back
             </Link>
@@ -27,9 +27,9 @@
 
                     <div id="printable-receipt" class="w-[80mm] shadow bg-white p-4 print:shadow-none print:p-0">
                         <div class="receipt-header text-sm border-b border-dashed pb-2 text-center">
-                            <h2 class="store-name font-bold text-base">TOKO KAIN ECER</h2>
-                            <p>Jl. Tekstil Utama No. 88, Semarang</p>
-                            <p>Telp: 024-12345678</p>
+                            <h2 class="store-name font-bold text-base">UTEX</h2>
+                            <p>Jl. Musi No.12, RT.05/RW.02</p>
+                            <p>Sidomulyo, Kec. Ungaran Tim., Kab. Semarang</p>
                         </div>
 
                         <div class="receipt-info text-xs grid grid-cols-[30%_5%_1fr] py-2 border-b border-dashed">
@@ -157,7 +157,7 @@
                                     class="flex justify-between text-xs">
                                     <span class="text-slate-600">{{ det.metode_bayar }}</span>
                                     <span class="font-mono font-bold text-amber-800">Rp {{ formatNumber(det.nominal)
-                                    }}</span>
+                                        }}</span>
                                 </div>
                                 <div
                                     class="flex justify-between font-bold border-t border-amber-200 pt-1 mt-1 text-sm text-amber-900">
