@@ -24,21 +24,38 @@ class ProdukEcerController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('perPage', 10);
-        $gudangId = 1;
-        // dd($request->kategori);
+        $gudangId = 1; // Sesuaikan dengan logika gudang kamu
+        $search = $request->input('search');
+
+        // Kita mulai dari ProdukVarian tapi dikunci dengan whereHas Stok
+        // Ini lebih efisien untuk ditampilkan ke tabel Vue kamu
         $products = ProdukVarian::with([
             'produk.kategori',
             'produk.satuan',
-            'details'
-        ])->where('gudang_id', 1)
-            ->where('panjang', '>', 0)
-            ->whereHas('details', fn($q) => $q->where('qty', '>', 0))
-            ->when($request->search, function ($q) use ($request) {
-                $q->where('nama_varian', 'like', "%{$request->search}%")
-                    ->orWhereHas('produk', function ($pq) use ($request) {
-                        $pq->where('nama_produk', 'like', "%{$request->search}%");
-                    });
+            'details' => function ($q) use ($gudangId) {
+                $q->whereHas('stok', function ($query) use ($gudangId) {
+                    $query->where('gudang_id', $gudangId);
+                })->where('qty', '>', 0);
+            },
+            'stok' => function ($q) use ($gudangId) {
+                $q->where('gudang_id', $gudangId);
+            }
+        ])
+            // KUNCI: Hanya munculkan yang punya baris stok di gudang ini
+            ->whereHas('stok', function ($q) use ($gudangId) {
+                $q->where('gudang_id', $gudangId)
+                    ->where('total_qty', '>', 0); // Hanya yang ada sisa stoknya
             })
+            // Filter Pencarian (Nama Produk atau Nama Varian/Warna)
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('nama_varian', 'like', "%{$search}%")
+                        ->orWhereHas('produk', function ($pq) use ($search) {
+                            $pq->where('nama_produk', 'like', "%{$search}%");
+                        });
+                });
+            })
+            // Filter Kategori
             ->when($request->kategori, function ($q) use ($request) {
                 $q->whereHas('produk', function ($pq) use ($request) {
                     $pq->where('kategori_id', $request->kategori);
@@ -47,24 +64,15 @@ class ProdukEcerController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        // dd($products->first()->stokFisiks);
-        $allProduk = Produk::with([
-            'kategori',
-            'varian' => function ($q) use ($gudangId) {
-                $q->where('gudang_id', $gudangId)
-                    ->with('details');
-            }
-        ])->get();
+        // Data pendukung lainnya
+        $allProduk = Produk::with(['kategori', 'varian.details'])->get();
 
         return Inertia::render('Ecer/Produk', [
-            'varians' => $products,
-            'categories' => Kategori::orderBy('id', 'asc')->get(),
-            'nama_produks' => Kategori::where('status', 'nama')->get(),
+            'varians' => $products, // Ini akan berisi data paginasi untuk tabel
+            'categories' => Kategori::orderBy('nama_kategori', 'asc')->get(),
             'gudangs' => Gudang::orderBy('nama_gudang')->get(),
-            'semua_produk' => $allProduk,
-            'suppliers' => Supplier::orderBy('id')->get(),
-            'pelanggans' => Pelanggan::orderBy('id')->get(),
-            'satuan' => Satuan::orderBy('id')->get(),
+            'allProducts' => $allProduk, // Pastikan prop ini sama dengan di Vue (allProducts)
+            'satuan' => Satuan::all(),
             'filters' => $request->only(['search', 'kategori', 'perPage']),
         ]);
     }
@@ -116,7 +124,7 @@ class ProdukEcerController extends Controller
             $varian = ProdukVarian::firstOrCreate(
                 [
                     'produk_id' => $produk->id,
-                    'nama' => $request->kode_warna
+                    'nama' => $request->kode_warna,
                 ],
                 [
                     'gudang_id' => 1,
@@ -143,13 +151,24 @@ class ProdukEcerController extends Controller
 
             // 5. Simpan Detail/History
 
-            $varian->details()->create([
+            $detail = $varian->details()->create([
+                'gudang_id' => 1,
                 'stok_id'   => $stok->id,
                 'satuan_id' => $request->satuan_id,
                 'qty'       => $request->panjang ?? 0,
                 'isi_2'     => 0,
                 'status'    => 'tersedia',
             ]);
+
+            if ($detail->stok_id === $stok->id) {
+                $stok->increment('total_unit', 1);
+                $stok->increment('total_qty', $request->panjang ?? 0);
+            } else {
+                $stok->update([
+                    'total_unit' => 1,
+                    'total_qty' => $request->panjang ?? 0
+                ]);
+            }
 
             DB::commit();
             return back()->with('success', 'Produk dan Varian berhasil disimpan');

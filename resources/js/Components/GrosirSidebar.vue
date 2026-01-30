@@ -16,7 +16,7 @@ const props = defineProps({
 
 </script>
 <template>
-    <div class="max-w-50 h-screen overflow-hidden bg-primary text-white relative -top-12 left-0">
+    <div class="max-w-50 h-screen overflow-hidden bg-primary text-white relative -top-10 left-0">
         <h1 class="flex items-center flex-nowrap">
             <div class="w-16 h-12 p-2 shrink-0">
                 <img :src="Logog3" alt="">
@@ -65,14 +65,15 @@ const props = defineProps({
                 </Link>
             </div>
             <div class="pt-2">
-                <a href="/grosir/stock"
+                <a href="/grosir/stok"
                     class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
                     <div class="w-8 h-8 shrink-0 p-0.5"><img :src="ImgStc" alt=""></div>
                     <span class="ml-4">Stock</span>
                 </a>
             </div>
             <div class="pt-2">
-                <a href="#" class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
+                <a href="/grosir/stok"
+                    class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
                     <div class="w-8 h-8 shrink-0 p-0.5"><img :src="ImgLpr" alt=""></div>
                     <span class="ml-4">Laporan</span>
                 </a>

@@ -11,9 +11,10 @@ class Stok extends Model
     protected $fillable = [
         'varian_id',
         'gudang_id',
-        'nomor',
+        'total_qty',
+        'total_unit',
+        'nomer',
         'tanggal_kadaluarsa',
-
     ];
 
     public function varian()
@@ -28,6 +29,6 @@ class Stok extends Model
 
     public function details()
     {
-        return $this->HasMany(ProdukDetail::class, 'stok_id');
+        return $this->hasMany(ProdukDetail::class, 'stok_id');
     }
 }

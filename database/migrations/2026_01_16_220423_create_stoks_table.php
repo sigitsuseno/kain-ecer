@@ -15,7 +15,9 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('gudang_id')->nullable();
             $table->unsignedBigInteger('varian_id')->nullable();
-            $table->string('nomor')->nullable();
+            $table->string('nomer')->nullable();
+            $table->decimal('total_qty', 15, 2)->default(0);
+            $table->decimal('total_unit', 15, 2)->default(0);
             $table->date('tanggal_kadaluarsa')->nullable();
             $table->timestamps();
         });

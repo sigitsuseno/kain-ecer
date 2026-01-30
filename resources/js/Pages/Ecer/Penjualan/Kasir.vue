@@ -87,27 +87,36 @@
 
                     <div class="w-full border-b px-4 text-sm absolute top-0 left-0 py-2 bg-white z-10 shadow-sm">
                         <h3 class="font-bold text-base">Keranjang Belanja</h3>
-                        <div class="grid grid-cols-[30%_5%_1fr]">
-                            <div>Nomer</div>
-                            <div>:</div>
-                            <div class="font-mono">{{ draft.nomer }}</div>
+
+                        <div v-if="draft">
+                            <div class="grid grid-cols-[30%_5%_1fr]">
+                                <div>Nomer</div>
+                                <div>:</div>
+                                <div class="font-mono">{{ draft.nomer }}</div>
+                            </div>
+                            <div class="grid grid-cols-[30%_5%_1fr]">
+                                <div>Tanggal</div>
+                                <div>:</div>
+                                <div>{{ draft.tanggal }}</div>
+                            </div>
+                            <div class="grid grid-cols-[30%_5%_1fr]">
+                                <div>Pelanggan</div>
+                                <div>:</div>
+                                <div class="font-bold">
+                                    {{ draft.pelanggan?.nama }}
+                                    <span class="text-xs font-normal">/ Pj: {{ draft.marketing?.nama }}</span>
+                                </div>
+                            </div>
+                            <div class="absolute top-6 right-4 space-y-2 flex flex-col">
+                                <button type="button" @click="hapusPenjualan(draft.id)"
+                                    class="px-3 py-1 rounded-sm bg-red-500 font-bold text-white cursor-pointer hover:bg-red-600">Ganti</button>
+                                <a href="/ecer/penjualan/transaksi"
+                                    class="px-3 py-1 rounded-sm bg-green-500 font-bold text-white text-center cursor-pointer hover:bg-green-600 text-xs">Refresh</a>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-[30%_5%_1fr]">
-                            <div>Tanggal</div>
-                            <div>:</div>
-                            <div>{{ draft.tanggal }}</div>
-                        </div>
-                        <div class="grid grid-cols-[30%_5%_1fr]">
-                            <div>Pelanggan</div>
-                            <div>:</div>
-                            <div class="font-bold">{{ draft.pelanggan?.nama }} <span class="text-xs font-normal">/ Pj:
-                                    {{ draft.marketing?.nama }}</span></div>
-                        </div>
-                        <div class="absolute top-6 right-4 space-y-2 flex flex-col">
-                            <button type="button" @click="hapusPenjualan(draft.id)"
-                                class="px-3 py-1 rounded-sm bg-red-500 font-bold text-white cursor-pointer hover:bg-red-600">Ganti</button>
-                            <a href="/ecer/penjualan/transaksi"
-                                class="px-3 py-1 rounded-sm bg-green-500 font-bold text-white text-center cursor-pointer hover:bg-green-600 text-xs">Refresh</a>
+
+                        <div v-else class="text-xs text-red-500 italic py-2">
+                            Sedang memuat data transaksi...
                         </div>
                     </div>
 

@@ -13,6 +13,16 @@ return new class extends Migration
     {
         Schema::create('kartu_stoks', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('produk_detail_id')->constrained('produk_details')->onDelete('cascade');
+            $table->foreignId('varian_id')->constrained('produk_varians');
+            $table->integer('dari_gudang_id')->nullable();
+            $table->integer('ke_gudang_id')->nullable();
+            $table->enum('tipe', ['masuk', 'keluar', 'transfer', 'penyesuaian']);
+            $table->decimal('qty', 10, 2);
+            $table->decimal('stok_awal', 10, 2);
+            $table->decimal('stok_akhir', 10, 2);
+            $table->string('keterangan')->nullable();
+            $table->foreignId('user_id')->constrained('users');
             $table->timestamps();
         });
     }

@@ -16,7 +16,7 @@ class PenjualanEcerController extends Controller
             ->with([
                 'pelanggan:id,nama',
                 'marketing:id,nama',
-            ]);
+            ])->where('bagian', 'ecer');
 
         if ($request->filled('search')) {
             $search = $request->search;

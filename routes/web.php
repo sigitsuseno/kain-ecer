@@ -6,19 +6,20 @@ use App\Http\Controllers\Ecer\EcerController;
 use App\Http\Controllers\Ecer\PembayaranEcerController;
 use App\Http\Controllers\Ecer\PenjualanEcerController;
 use App\Http\Controllers\Ecer\ProdukEcerController;
-use App\Http\Controllers\Ecer\StokController;
+use App\Http\Controllers\Ecer\StokEcerController;
 use App\Http\Controllers\Ecer\TransaksiPenjualanEceranController;
 use App\Http\Controllers\Grosir\PenerimaanController;
 use App\Http\Controllers\Grosir\PenjualanGrosirController;
+use App\Http\Controllers\Grosir\StokGrosirController;
 use App\Http\Controllers\PrintController;
 use App\Models\Penerimaan;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-
-
-
-
+Route::middleware(['auth'])->group(function () {
+    // Tambahkan ini: Route khusus pencarian produk
+    Route::get('/api/produk-search', [PenjualanGrosirController::class, 'searchProduk'])->name('api.produk.search');
+});
 
 
 
@@ -36,6 +37,7 @@ Route::prefix('auth')
 
 Route::post('/print-thermal', [PrintController::class, 'print'])
     ->name('print-thermal');
+
 
 Route::prefix('dashboard')
     ->name('dashboard.')
@@ -180,10 +182,11 @@ Route::prefix('ecer')
 
         Route::prefix('stok')
             ->name('stok.')
-            ->controller(StokController::class)
+            ->controller(StokEcerController::class)
             ->group(function () {
                 Route::get('/', 'index')->name('index');
-                Route::post('/', 'store')->name('store');
+                Route::get('/create', 'createTransfer')->name('create-transfer');
+                Route::post('/', 'storeTransfer')->name('store-transfer');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
             });
@@ -271,10 +274,22 @@ Route::prefix('grosir')
                 Route::get('/', 'index')->name('index');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/store', 'store')->name('store');
+                Route::get('/{id}/show', 'show')->name('show');
                 Route::get('/{id}/edit', 'edit')->name('edit');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
                 Route::get('/update-data', 'updateData')->name('update-data');
+                Route::post('/direct-print/{id}', 'printNota')->name('direct-print');
+            });
+        Route::prefix('stok')
+            ->name('stok.')
+            ->controller(StokGrosirController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                // Route::get('/create', 'createTransfer')->name('create-transfer');
+                // Route::post('/', 'storeTransfer')->name('store-transfer');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
             });
     });
 

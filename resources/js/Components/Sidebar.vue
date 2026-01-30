@@ -16,7 +16,7 @@ const props = defineProps({
 
 </script>
 <template>
-    <div class="max-w-50 h-screen overflow-hidden bg-primary text-white relative -top-12 left-0">
+    <div class="max-w-50 h-screen overflow-hidden bg-primary text-white relative -top-10 left-0">
         <h1 class="flex items-center flex-nowrap">
             <div class="w-16 h-12 p-2 shrink-0">
                 <img :src="Logog3" alt="">

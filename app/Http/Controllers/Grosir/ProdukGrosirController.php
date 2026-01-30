@@ -24,14 +24,19 @@ class ProdukGrosirController extends Controller
         // Ambil per_page dari request, default ke 10
         $perPage = $request->input('per_page', 10);
 
+        $gudangId = 2;
+
         $products = ProdukVarian::with([
             'produk.satuan',
             'produk.kategori',
-            'details.satuan'
-            // Filter relasi details di sini
-            // 'details' => function ($query) {
-            //     $query->where('status', 'tersedia')->with('satuan');
-            // }
+            'details' => function ($q) use ($gudangId) {
+                $q->whereHas('stok', function ($query) use ($gudangId) {
+                    $query->where('gudang_id', $gudangId);
+                })->where('qty', '>', 0);
+            },
+            'stok' => function ($qy) {
+                $qy->where('gudang_id', 2);
+            }
         ])
             ->when($request->search, function ($q) use ($request) {
                 $q->where('nama', 'like', "%{$request->search}%")

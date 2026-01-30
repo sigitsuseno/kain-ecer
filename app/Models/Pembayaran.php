@@ -14,6 +14,7 @@ class Pembayaran extends Model
         'status',
         'keterangan',
         'is_dp',
+        'retur_id',
     ];
 
     public function penjualan()
@@ -24,5 +25,9 @@ class Pembayaran extends Model
     public function details()
     {
         return $this->hasMany(PembayaranDetails::class, 'pembayaran_id');
+    }
+    public function retur()
+    {
+        return $this->belongsTo(ReturPenjualan::class, 'retur_id');
     }
 }

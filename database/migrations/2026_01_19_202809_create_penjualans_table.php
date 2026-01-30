@@ -24,6 +24,7 @@ return new class extends Migration
             $table->decimal('ongkir', 19, 2)->default(0);
             $table->decimal('kembalian', 19, 2)->default(0);
             $table->string('status')->nullable();
+            $table->boolean('has_retur')->default(false);
             $table->timestamps();
         });
     }

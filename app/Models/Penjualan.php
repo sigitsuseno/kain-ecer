@@ -18,6 +18,7 @@ class Penjualan extends Model
         'ongkir',
         'kembalian',
         'status',
+        'has_retur',
     ];
 
     public function items()

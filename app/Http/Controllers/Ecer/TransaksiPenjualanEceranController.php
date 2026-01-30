@@ -29,15 +29,20 @@ class TransaksiPenjualanEceranController extends Controller
             'marketing',
             'items.varian.produk',
             'items.details'
-        ])->where('status', 'UNPAID');
+        ])
+            ->where('status', 'UNPAID')
+            ->where('bagian', 'ecer');
 
-        // Tambahkan filter search sederhana jika dibutuhkan
+
         if ($request->search) {
-            $query->where('nomer_nota', 'like', "%{$request->search}%")
-                ->orWhereHas('pelanggan', function ($q) use ($request) {
-                    $q->where('nama', 'like', "%{$request->search}%");
-                });
+            $query->where(function ($q) use ($request) {
+                $q->where('nomer', 'like', "%{$request->search}%")
+                    ->orWhereHas('pelanggan', function ($sub) use ($request) {
+                        $sub->where('nama', 'like', "%{$request->search}%");
+                    });
+            });
         }
+        // dd($query);
         return inertia('Ecer/Penjualan/List', [
             'penjualan' => $query->latest()->get(),
         ]);
@@ -45,13 +50,13 @@ class TransaksiPenjualanEceranController extends Controller
 
     public function index(Request $request)
     {
-
         $penjualan = Penjualan::with([
             'items.varian.produk',
             'items.varian.details',
             'pelanggan',
             'marketing'
         ])
+            ->where('bagian', 'ecer')
             ->where('status', 'DRAFT')
             ->first();
 
@@ -62,9 +67,9 @@ class TransaksiPenjualanEceranController extends Controller
             'produk' => ProdukVarian::with([
                 'produk',
                 'stok',
-                'details' => fn($q) => $q->where('qty', '>', 0)->with('satuan'),
+                'details' => fn($q) => $q->where('qty', '>', 0)->where('gudang_id', 1)->with('satuan'),
             ])
-                ->whereHas('details', fn($q) => $q->where('qty', '>', 0))
+                ->whereHas('details', fn($q) => $q->where('qty', '>', 0)->where('gudang_id', 1))
                 ->get(),
             'company' => Perusahaan::find(1) ?? null,
         ]);
@@ -110,6 +115,7 @@ class TransaksiPenjualanEceranController extends Controller
                 [
                     'pelanggan_id' => $pelanggan->id,
                     'status' => 'DRAFT',
+                    'bagian' => 'ecer',
                 ],
                 [
                     'nomer' => $this->generateNota(),
@@ -132,6 +138,7 @@ class TransaksiPenjualanEceranController extends Controller
         $prefix = 'INV-' . now()->format('Ym');
 
         $last = Penjualan::where('nomer', 'like', "$prefix%")
+            ->where('bagian', 'ecer')
             ->orderByDesc('id')
             ->value('nomer');
 

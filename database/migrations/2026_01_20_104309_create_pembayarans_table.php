@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('metode')->default('CASH');
             $table->text('keterangan')->nullable();
             $table->boolean('is_dp')->default(false);
+            $table->unsignedBigInteger('retur_id')->nullable();
             $table->timestamps();
         });
     }
