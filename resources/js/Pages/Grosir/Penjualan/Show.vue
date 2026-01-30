@@ -192,11 +192,6 @@ const formatRupiah = (number) => {
     return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(number);
 }
 
-// --- HELPER FORMATTING ---
-const formatRupiah = (number) => {
-    return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(number);
-}
-
 const formatDate = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -548,7 +543,7 @@ const printBluetooth = async () => {
                             class="total-row flex justify-between italic text-[10px] text-gray-500">
                             <span>Ongkir / Diskon</span>
                             <span>{{ formatCurrency(penjualan.ongkir) }} / -{{ formatCurrency(penjualan.diskon)
-                            }}</span>
+                                }}</span>
                         </div>
 
                         <div class="total-row flex justify-between border-t border-dashed mt-1 pt-1 font-bold">
