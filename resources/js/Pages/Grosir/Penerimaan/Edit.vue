@@ -62,8 +62,8 @@
                                 </td>
 
                                 <td class="p-3 text-center">
-                                    <div class="font-bold text-blue-600 text-base">{{ item.details.length }} Rl</div>
-                                    <div class="text-[10px] font-bold text-amber-600 bg-amber-50 rounded px-1">{{
+                                    <div class="font-bold text-blue-600 text-base">{{ item.details.length }} Roll</div>
+                                    <div class="text-xs font-bold text-amber-600 bg-amber-50 rounded px-1">{{
                                         calculateItemTotal(index) }} Yd</div>
                                 </td>
 
@@ -104,30 +104,7 @@
             </div>
 
             <div v-if="sideTab === 'cari'" class="p-4 flex flex-col h-full overflow-hidden">
-                <div class="relative mb-4">
-                    <i class='bx bx-search absolute left-3 top-2.5 text-gray-400'></i>
-                    <input type="search" v-model="searchQuery"
-                        class="w-full h-10 pl-9 pr-4 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition"
-                        placeholder="Cari kain atau warna...">
-                </div>
-
-                <div class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scroll">
-                    <div v-for="p in filteredProducts" :key="p.id" @click="addProduct(p)"
-                        class="p-3 border bg-white rounded-xl hover:border-primary hover:shadow-md cursor-pointer transition group border-gray-100 shadow-sm">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="font-bold text-gray-800 text-sm leading-tight">{{ p.produk.nama }}</span>
-                            <span
-                                class="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">
-                                {{ p.tipe || 'Standard' }}
-                            </span>
-                        </div>
-                        <div class="text-sm text-gray-500 flex items-center justify-between">
-                            <span>Warna: <span class="text-primary font-medium">{{ p.nama }}</span></span>
-                            <i
-                                class='bx bx-plus-circle text-xl text-primary opacity-0 group-hover:opacity-100 transition'></i>
-                        </div>
-                    </div>
-                </div>
+                <CariProduk @tambah-produk="addProduct" />
             </div>
 
             <div v-if="sideTab === 'buat'" class="h-full overflow-y-auto">
@@ -139,10 +116,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useForm, Link } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import { useForm, Link, router } from '@inertiajs/vue3';
 import Swal from 'sweetalert2';
 import ProdukOffsideTab from '../../../Components/Grosir/ProdukOffsideTab.vue';
+import CariProduk from '../../../Components/Grosir/CariProduk.vue';
 
 const props = defineProps({
     pembelian: Object,
@@ -153,7 +131,6 @@ const props = defineProps({
 });
 
 const sideTab = ref('cari');
-const searchQuery = ref('');
 
 // Inisialisasi Form dengan Mapping Data Lama
 const form = useForm({
@@ -173,16 +150,7 @@ const form = useForm({
     }))
 });
 
-const filteredProducts = computed(() => {
-    const list = props.produk_by_color?.data || [];
-    if (!searchQuery.value) return list;
 
-    const q = searchQuery.value.toLowerCase();
-    return list.filter(p =>
-        p.produk.nama.toLowerCase().includes(q) ||
-        p.nama.toLowerCase().includes(q)
-    );
-});
 
 const addProduct = (varian) => {
     const exists = form.items.find(i => i.varian_id === varian.id);
@@ -195,13 +163,11 @@ const addProduct = (varian) => {
             tipe: varian.tipe,
             details: []
         });
+
+        // Opsional: Berikan feedback suara atau toast kecil
+        // Toast.fire({ icon: 'info', title: 'Produk ditambahkan ke list' });
     } else {
-        Swal.fire({
-            icon: 'info',
-            title: 'Produk sudah ada di list',
-            timer: 1000,
-            showConfirmButton: false
-        });
+        alert('Produk sudah ada di daftar');
     }
 };
 
@@ -277,6 +243,7 @@ const submit = () => {
         }
     });
 };
+
 </script>
 
 <style scoped>

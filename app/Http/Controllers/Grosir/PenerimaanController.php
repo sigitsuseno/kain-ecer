@@ -43,24 +43,33 @@ class PenerimaanController extends Controller
     }
     public function create(Request $request)
     {
-        $perPage = $request->per_page ?? 10;
+        $perPage = $request->per_page ?? 30;
         $gudangId = 2;
 
         $varian = ProdukVarian::with([
-            "produk.kategori",
-            "produk.satuan",
-            "details",
+            'produk.satuan',
+            'produk.kategori',
+            'details' => function ($q) use ($gudangId) {
+                $q->where('gudang_id', $gudangId)->where('status', 'tersedia');
+            },
+            'stok' => function ($qy) {
+                $qy->where('gudang_id', 2);
+            }
         ])
             ->when($request->search, function ($q) use ($request) {
-                $q->where(
-                    "kode_warna",
-                    "like",
-                    "%{$request->search}%",
-                )->orWhereHas("produk", function ($pq) use ($request) {
-                    $pq->where("nama_produk", "like", "%{$request->search}%");
+                $q->where('nama', 'like', "%{$request->search}%")
+                    ->orWhereHas('produk', function ($query) use ($request) {
+                        $query->where('nama', 'like', "%{$request->search}%");
+                    });
+            })
+            ->when($request->kategori, function ($q) use ($request) {
+                // Pastikan filter kategori mencari ke tabel produk jika kategori_id ada di sana
+                $q->whereHas('produk', function ($query) use ($request) {
+                    $query->where('kategori_id', $request->kategori);
                 });
             })
-            ->paginate($perPage) // Tambahkan paginate() atau get() di sini
+            ->orderBy('id', 'asc')
+            ->paginate($perPage)
             ->withQueryString();
 
         return inertia("Grosir/Penerimaan/Create", [
@@ -121,7 +130,7 @@ class PenerimaanController extends Controller
                     $stok = $varian->stok()->create([
                         "gudang_id" => 2,
                         "nomer" =>
-                            $request->nomer_pembelian .
+                        $request->nomer_pembelian .
                             "-" .
                             $item["varian_id"] .
                             "-" .
@@ -180,7 +189,6 @@ class PenerimaanController extends Controller
 
     public function edit($id, Request $request)
     {
-        $perPage = $request->per_page ?? 10;
 
         // Ambil data pembelian dengan relasi lengkap
         $pembelian = Pembelian::with([
@@ -188,23 +196,32 @@ class PenerimaanController extends Controller
             "items.details.satuan",
         ])->findOrFail($id);
 
-        // Data Varian untuk Sidebar (Sama dengan Create)
+        $perPage = $request->per_page ?? 30;
+        $gudangId = 2;
+
         $varian = ProdukVarian::with([
-            "produk.kategori",
-            "produk.satuan",
-            "details" => function ($kueri) {
-                $kueri->where("gudang_id", 2);
+            'produk.satuan',
+            'produk.kategori',
+            'details' => function ($q) use ($gudangId) {
+                $q->where('gudang_id', $gudangId)->where('status', 'tersedia');
             },
+            'stok' => function ($qy) {
+                $qy->where('gudang_id', 2);
+            }
         ])
             ->when($request->search, function ($q) use ($request) {
-                $q->where(
-                    "kode_warna",
-                    "like",
-                    "%{$request->search}%",
-                )->orWhereHas("produk", function ($pq) use ($request) {
-                    $pq->where("nama_produk", "like", "%{$request->search}%");
+                $q->where('nama', 'like', "%{$request->search}%")
+                    ->orWhereHas('produk', function ($query) use ($request) {
+                        $query->where('nama', 'like', "%{$request->search}%");
+                    });
+            })
+            ->when($request->kategori, function ($q) use ($request) {
+                // Pastikan filter kategori mencari ke tabel produk jika kategori_id ada di sana
+                $q->whereHas('produk', function ($query) use ($request) {
+                    $query->where('kategori_id', $request->kategori);
                 });
             })
+            ->orderBy('id', 'asc')
             ->paginate($perPage)
             ->withQueryString();
 
@@ -473,7 +490,7 @@ class PenerimaanController extends Controller
                     "beban_biaya" => $oldter->other_cost ?? 0,
                     "status" => "DITERIMA",
                     "catatan" =>
-                        "Migrasi: Total Old Length " .
+                    "Migrasi: Total Old Length " .
                         $oldter->total_purchase_length,
                     "created_at" => $oldter->created_at,
                     "updated_at" => $oldter->updated_at,
@@ -536,7 +553,7 @@ class PenerimaanController extends Controller
                     $stok = $varian->stok()->create([
                         "gudang_id" => 2,
                         "nomer" =>
-                            $penerimaan->id .
+                        $penerimaan->id .
                             "-" .
                             $varian->id .
                             "-" .
@@ -652,6 +669,42 @@ class PenerimaanController extends Controller
         return inertia("Grosir/Comparing", [
             "results" => $results,
             "missing_count" => $dataKetinggalan->count(),
+        ]);
+    }
+
+    public function searchProduk(Request $request)
+    {
+        $perPage = $request->per_page ?? 30;
+        $gudangId = 2;
+
+        $varian = ProdukVarian::with([
+            'produk.satuan',
+            'produk.kategori',
+            'details' => function ($q) use ($gudangId) {
+                $q->where('gudang_id', $gudangId)->where('status', 'tersedia');
+            },
+            'stok' => function ($qy) {
+                $qy->where('gudang_id', 2);
+            }
+        ])
+            ->when($request->search, function ($q) use ($request) {
+                $q->where('nama', 'like', "%{$request->search}%")
+                    ->orWhereHas('produk', function ($query) use ($request) {
+                        $query->where('nama', 'like', "%{$request->search}%");
+                    });
+            })
+            ->when($request->kategori, function ($q) use ($request) {
+                // Pastikan filter kategori mencari ke tabel produk jika kategori_id ada di sana
+                $q->whereHas('produk', function ($query) use ($request) {
+                    $query->where('kategori_id', $request->kategori);
+                });
+            })
+            ->orderBy('id', 'asc')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return response()->json([
+            'varian' => $varian
         ]);
     }
 }

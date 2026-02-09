@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full h-[calc(100vh-48px)] overflow-hidden bg-blue-100 grid grid-cols-[1fr_300px]">
+    <div class="w-full h-[calc(100vh-40px)] overflow-hidden bg-blue-100 grid grid-cols-[1fr_300px]">
 
         <div class="w-full h-full p-6 overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
@@ -101,33 +101,7 @@
             </div>
 
             <div v-if="sideTab === 'cari'" class="p-4 flex flex-col h-full overflow-hidden">
-                <div class="relative mb-4">
-                    <i class='bx bx-search absolute left-3 top-2 text-gray-400'></i>
-                    <input type="search" v-model="searchQuery"
-                        class="w-full h-9 pl-9 pr-4 rounded-full border border-gray-200 text-sm focus:ring-1 focus:ring-primary"
-                        placeholder="Cari kain atau warna...">
-                </div>
-
-                <div class="flex-1 overflow-y-auto space-y-2 pr-1">
-                    <div v-for="p in filteredProducts" :key="p.id" @click="addProduct(p)"
-                        class="p-3 border bg-white rounded-xl hover:bg-blue-50 cursor-pointer transition group border-gray-100 shadow-sm">
-                        <div class="flex justify-between items-start">
-                            <span class="font-bold text-gray-800 text-sm">{{ p.produk.nama }}</span>
-                            <span class="text-[10px] bg-primary/10 text-primary px-2 rounded-full">
-                                {{ p.tipe || 'No Type' }}
-                            </span>
-                        </div>
-                        <div class="text-sm text-blue-900 mt-1 flex items-center justify-between">Warna: {{
-                            p.nama }}
-
-                            <i
-                                class='bx bx-plus-circle text-lg text-primary opacity-0 group-hover:opacity-100 transition'></i>
-                        </div>
-                        <!-- <div class="flex justify-between mt-2 text-[10px] text-gray-400 border-t pt-2">
-                            <span>Stok: {{ p.total_qty || 0 }} Roll</span>
-                        </div> -->
-                    </div>
-                </div>
+                <CariProduk @tambah-produk="addProduct" />
             </div>
 
             <div v-if="sideTab === 'buat'">
@@ -139,10 +113,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useForm, Link } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import { useForm, Link, router } from '@inertiajs/vue3';
 import Swal from 'sweetalert2';
 import ProdukOffsideTab from '../../../Components/Grosir/ProdukOffsideTab.vue';
+import CariProduk from '../../../Components/Grosir/CariProduk.vue';
 
 const props = defineProps({
     produk_by_color: Object, // Dari Laravel Paginate [cite: 51]
@@ -153,24 +128,12 @@ const props = defineProps({
 });
 
 const sideTab = ref('cari');
-const searchQuery = ref('');
 
 // State Form berjenjang
 const form = useForm({
     nomer_pembelian: props.nomer_pembelian,
     tanggal_transaksi: new Date().toISOString().substr(0, 10),
     items: [] // Level 2: pembelian_items
-});
-
-// Computed untuk Filter Produk di Sidebar
-const filteredProducts = computed(() => {
-    const list = props.produk_by_color?.data || [];
-    if (!searchQuery.value) return list;
-
-    return list.filter(p =>
-        p.produk.nama.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        p.nama.toLowerCase().includes(searchQuery.value.toLowerCase())
-    );
 });
 
 // Fungsi Tambah Produk ke List Transaksi
@@ -185,9 +148,12 @@ const addProduct = (varian) => {
             tipe: varian.tipe,
             details: []
         });
-        console.log(varian.nama);
-    }
 
+        // Opsional: Berikan feedback suara atau toast kecil
+        Toast.fire({ icon: 'info', title: 'Produk ditambahkan ke list' });
+    } else {
+        alert('Produk sudah ada di daftar');
+    }
 };
 
 // Logika Input Cepat: 40*10 (Panjang 40 sebanyak 10 roll)
@@ -246,6 +212,7 @@ const submit = () => {
         }
     });
 };
+
 </script>
 
 <style scoped>

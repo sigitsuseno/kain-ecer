@@ -318,7 +318,9 @@ Route::prefix('grosir')
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
                 Route::get('/update-data', 'updateData')->name('update-data');
+                Route::get('/search-produk', 'searchProduk')->name('search-produk');
             });
+
 
         Route::prefix('penjualan')
             ->name('penjualan.')
