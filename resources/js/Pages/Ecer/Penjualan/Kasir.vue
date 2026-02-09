@@ -110,7 +110,7 @@
                             </div>
                         </div>
                         <div v-if="showMarketingList && filteredMarketing.length > 0"
-                            class="absolute z-[60] w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-48 overflow-y-auto box-border">
+                            class="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-48 overflow-y-auto box-border">
                             <div v-for="m in filteredMarketing" :key="m.id" @mousedown="selectMarketing(m.nama)"
                                 class="px-3 py-2 text-sm hover:bg-primary hover:text-white cursor-pointer transition-colors border-b border-gray-50 last:border-none">
                                 <div class="font-semibold">{{ m.nama }}</div>
@@ -280,20 +280,20 @@ const filteredCustomers = computed(() => {
 
 // Filter Marketing - Tambahkan .value
 const filteredMarketing = computed(() => {
-    if (!draftForm.value.marketing) return props.marketing; // Tambahkan .value
+    const search = draftForm.value.marketing || ''; // Fallback jika null
+    if (!search) return props.marketing;
     return props.marketing.filter(m =>
-        m.nama.toLowerCase().includes(draftForm.value.marketing.toLowerCase()) // Tambahkan .value
+        m.nama && m.nama.toLowerCase().includes(search.toLowerCase())
     );
 });
 
-
 // Fungsi memilih data
 const selectCustomer = (nama) => {
-    console.log(nama);
     draftForm.value.pelanggan = nama; // Pastikan menggunakan .value karena draftForm adalah ref
     showCustomerList.value = false;
     console.log(draftForm.value.pelanggan);
 };
+
 
 const selectMarketing = (nama) => {
     draftForm.value.marketing = nama; // Pastikan menggunakan .value
@@ -403,9 +403,10 @@ const addRoll = (varian, roll) => {
 
 onMounted(() => {
     if (props.draft) {
+        // Gunakan || '' untuk memastikan tidak pernah null
         draftForm.value.pelanggan = props.draft.pelanggan?.nama || '';
         draftForm.value.marketing = props.draft.marketing?.nama || '';
-        draftForm.value.tanggal_transaksi = props.draft.tanggal;
+        draftForm.value.tanggal_transaksi = props.draft.tanggal || new Date().toISOString().slice(0, 10);
     }
 });
 
