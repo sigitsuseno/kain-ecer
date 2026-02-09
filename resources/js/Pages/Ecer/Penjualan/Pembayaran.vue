@@ -1,17 +1,17 @@
 <template>
     <div id="forOffset" class="w-full h-screen bg-slate-100 text-slate-800">
-        <header class="h-10 px-4 flex items-center justify-between bg-white border-b print:hidden">
-            <Link href="/ecer/penjualan"
+        <header class="h-10 px-4 flex items-center justify-between bg-indigo-800 border-b print:hidden">
+            <a href="/ecer/penjualan"
                 class="px-3 h-7 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 text-sm transition">
                 Back
-            </Link>
-            <h1 class="font-bold text-sm text-blue-600">POS Penjualan Eceran</h1>
-            <span class="text-xs">{{ today }}</span>
+            </a>
+            <h1 class="font-bold text-sm text-white">POS Penjualan Eceran</h1>
+            <span class="text-xs text-white">{{ today }}</span>
         </header>
 
         <div class="grid grid-cols-[65%_35%] h-[calc(100vh-40px)] print:block">
             <div class="w-full flex flex-col bg-slate-100 relative print:bg-white">
-                <div class="absolute top-0 right-0 p-2 z-10 print:hidden">
+                <!-- <div class="absolute top-0 right-0 p-2 z-10 print:hidden">
                     <OffsetPanel>
                         <div class="p-4">
                             <h3 class="font-bold mb-2">Informasi Tambahan</h3>
@@ -20,8 +20,18 @@
                             </p>
                         </div>
                     </OffsetPanel>
+                </div> -->
+                <div class="flex items-center justify-center gap-3 mt-4">
+                    <button @click="printTagihan(penjualan.id)" :disabled="isPrinting"
+                        class="w-fit px-3 bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                        <span v-if="isPrinting">⏳ MENCETAK...</span>
+                        <span v-else>🖨️ CETAK NOTA TAGIHAN</span>
+                    </button>
+                    <button @click="exportNotaKeGambar"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-4 rounded-lg font-bold flex items-center gap-2 transition active:scale-95">
+                        🖼️ Simpan Gambar
+                    </button>
                 </div>
-
                 <div class="flex flex-col items-center justify-center py-10 print:py-0 overflow-y-auto">
                     <h2 class="font-bold text-lg mb-4 print:hidden">Pratinjau Nota</h2>
 
@@ -101,9 +111,9 @@
                 </div>
             </div>
 
-            <div class="bg-white border-l flex flex-col relative print:hidden">
+            <div class="bg-white border-l border-primary/30 flex flex-col relative print:hidden">
                 <div class="w-full h-[calc(100vh-210px)] overflow-y-auto p-4 space-y-4">
-                    <h3 class="font-bold border-b pb-2 text-slate-600 flex items-center gap-2">
+                    <h3 class="font-bold border-b border-primary/30 pb-2 text-slate-600 flex items-center gap-2">
                         <span class="w-2 h-5 bg-blue-600 rounded-full"></span>
                         Panel Pembayaran
                     </h3>
@@ -131,13 +141,16 @@
                             class="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-100">
                             <input v-model="payment.bank_asal" placeholder="Bank Asal (Contoh: BCA)"
                                 class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
-                            <input v-model="payment.bank_tujuan" placeholder="Ke Bank Mana? (Contoh: Mandiri Toko)"
+                            <select v-model="payment.bank_tujuan" placeholder="Ke Bank Mana? (Contoh: Mandiri Toko)"
                                 class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
+                                <option v-for="b in banks" :value="b.slug">{{ b.nama_bank }}</option>
+
+                            </select>
                             <input v-model="payment.ref" placeholder="No. Ref / Kode Trace"
                                 class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
                         </div>
 
-                        <div class="grid grid-cols-[35%_1fr] items-center gap-2 pt-2 border-t">
+                        <div class="grid grid-cols-[35%_1fr] items-center gap-2 pt-2 border-t border-primary/30">
                             <label class="text-[10px] text-slate-500 font-bold uppercase">Ongkos Kirim</label>
                             <input type="number" v-model.number="ongkir"
                                 class="w-full h-10 outline-none rounded border border-slate-200 px-3 font-bold text-blue-700">
@@ -201,8 +214,10 @@
                                 <div v-if="payment.split1_metode !== 'CASH'" class="space-y-2">
                                     <input v-model="payment.bank_asal" placeholder="Bank Asal"
                                         class="w-full h-8 text-xs px-2 border rounded">
-                                    <input v-model="payment.bank_tujuan" placeholder="Bank Tujuan"
+                                    <select v-model="payment.bank_tujuan2" placeholder="Bank Tujuan"
                                         class="w-full h-8 text-xs px-2 border rounded">
+                                        <option v-for="b in banks" :value="b.slug">{{ b.nama_bank }}</option>
+                                    </select>
                                     <input v-model="payment.ref" placeholder="No. Ref"
                                         class="w-full h-8 text-xs px-2 border rounded">
                                 </div>
@@ -228,8 +243,10 @@
                                 <div v-if="payment.split2_metode !== 'CASH'" class="space-y-2">
                                     <input v-model="payment.bank_asal2" placeholder="Bank Asal"
                                         class="w-full h-8 text-xs px-2 border rounded">
-                                    <input v-model="payment.bank_tujuan2" placeholder="Bank Tujuan"
+                                    <select v-model="payment.bank_tujuan2" placeholder="Bank Tujuan"
                                         class="w-full h-8 text-xs px-2 border rounded">
+                                        <option v-for="b in banks" :value="b.slug">{{ b.nama_bank }}</option>
+                                    </select>
                                     <input v-model="payment.ref2" placeholder="No. Ref"
                                         class="w-full h-8 text-xs px-2 border rounded">
                                 </div>
@@ -240,11 +257,11 @@
 
                 <div class="p-4 border-t bg-slate-50 mt-auto">
                     <div class="space-y-1 mb-4 text-sm">
-                        <div class="flex justify-between text-slate-500">
+                        <!-- <div class="flex justify-between text-slate-500">
                             <span>Subtotal</span>
                             <span>{{ formatNumber(penjualan.total_harga) }}</span>
-                        </div>
-                        <div class="flex justify-between font-bold text-xl pt-2 border-t">
+                        </div> -->
+                        <div class="flex justify-between font-bold text-xl pt-2">
                             <span>Total Akhir</span>
                             <span class="text-blue-600">{{ formatNumber(totalKeseluruhan) }}</span>
                         </div>
@@ -269,12 +286,15 @@ import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AuthLayout from '../../../Layouts/AuthLayout.vue'
 import OffsetPanel from '../../../Components/OffsetPanel.vue'
+import axios from 'axios';
+import { toPng } from 'html-to-image';
 
 defineOptions({ layout: AuthLayout })
 
 const props = defineProps({
     penjualan: Object,
     historyPembayaran: Array,
+    banks: Array
 })
 
 // -- State --
@@ -408,6 +428,64 @@ const handleProsesPembayaran = () => {
         }
     });
 }
+
+const isPrinting = ref(false);
+
+
+
+const printTagihan = async (id) => {
+    if (!id) return alert("ID Transaksi tidak ditemukan");
+
+    isPrinting.value = true;
+
+    try {
+        // Mengirim request ke server tanpa pindah halaman
+        await axios.get(`/ecer/penjualan/print-tagihan/${id}`);
+        // Jika sukses, printer di server akan langsung mencetak
+    } catch (error) {
+        console.error(error);
+        alert("Gagal mencetak: Pastikan printer menyala dan terhubung.");
+    } finally {
+        setTimeout(() => {
+            isPrinting.value = false;
+        }, 1000);
+    }
+};
+
+const exportNotaKeGambar = () => {
+    const el = document.getElementById('printable-receipt');
+    if (!el) return;
+
+    // Bersihkan konsol setiap kali mulai, biar tidak numpuk 100x
+    console.clear();
+
+    const options = {
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+    };
+
+    toPng(el, options)
+        .then((dataUrl) => {
+            const link = document.createElement('a');
+            const nomerNota = props.penjualan?.nomer || 'Nota';
+
+            link.download = `${nomerNota}.png`;
+            link.href = dataUrl;
+            link.click();
+            link.remove();
+
+            // Setelah selesai, hilangkan jejak dataUrl dari memori variabel
+            dataUrl = null;
+
+            // Opsional: Bersihkan lagi setelah 1 detik
+            setTimeout(() => console.clear(), 1000);
+        })
+        .catch((err) => {
+            // Kita log error saja, tanpa dataUrl
+            console.error('Proses Export Gagal');
+        });
+};
 </script>
 
 <style scoped>
@@ -418,6 +496,20 @@ const handleProsesPembayaran = () => {
 ::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 10px;
+}
+
+#printable-receipt {
+    /* Memastikan font terbaca jelas saat di-render html-to-image */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Mencegah pemotongan elemen saat capture */
+    overflow: hidden;
+}
+
+/* Mempertegas border garis putus-putus pada hasil gambar */
+.border-dashed {
+    border-style: dashed !important;
+    border-color: #000000 !important;
 }
 
 @media print {

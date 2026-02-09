@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ecer;
 
 use App\Http\Controllers\Controller;
+use App\Models\BankPembayaran;
 use App\Models\Pelanggan;
 use App\Models\Pembayaran;
 use App\Models\Penjualan;
@@ -17,23 +18,29 @@ class PembayaranEcerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Pembayaran::with([
-            'pelanggan',
-            'marketing',
-            'items.varian.produk',
-            'items.details'
-        ])->where('status', 'UNPAID');
+        $perPage = $request->integer('perPage', 10);
 
-        // Tambahkan filter search sederhana jika dibutuhkan
-        if ($request->search) {
-            $query->where('nomer', 'like', "%{$request->search}%")
-                ->orWhereHas('pelanggan', function ($q) use ($request) {
-                    $q->where('nama', 'like', "%{$request->search}%");
-                });
+        $query = Penjualan::query()
+            ->with([
+                'pelanggan:id,nama',
+                'marketing:id,nama',
+            ])->where('bagian', 'ecer')->whereIn('status', ['LUNAS', 'DP']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('nomer', 'like', "%{$search}%")
+                    ->orWhereHas('pelanggan', function ($qp) use ($search) {
+                        $qp->where('nama', 'like', "%{$search}%");
+                    });
+            });
         }
-
         return inertia('Ecer/Penjualan/ListPembayaran', [
-            'penjualan' => $query->latest()->get(),
+            'penjualan' => $query
+                ->latest()
+                ->paginate($perPage)
+                ->withQueryString(),
         ]);
     }
 
@@ -60,6 +67,7 @@ class PembayaranEcerController extends Controller
         return inertia('Ecer/Penjualan/Pembayaran', [
             'historyPembayaran' => $historyPembayaran,
             'penjualan' => $penjualan,
+            'banks' => BankPembayaran::all(),
             'pelanggan' => Pelanggan::orderBy('nama')->get(),
             'marketing' => Supplier::where('status', 'marketing')->get(),
             'produk' => ProdukVarian::with([

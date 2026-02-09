@@ -1,10 +1,10 @@
 <template>
     <div id="forOffset" class="w-full h-screen bg-slate-100 text-slate-800">
         <header class="h-10 px-4 flex items-center justify-between bg-white border-b print:hidden">
-            <Link href="/ecer/penjualan"
+            <a href="/ecer/penjualan/pembayaran"
                 class="px-3 h-7 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 text-sm transition">
                 Back
-            </Link>
+            </a>
             <h1 class="font-bold text-sm text-blue-600">POS Penjualan Eceran</h1>
             <span class="text-xs">{{ today }}</span>
         </header>

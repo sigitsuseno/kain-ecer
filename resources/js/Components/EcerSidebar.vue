@@ -78,7 +78,8 @@ const props = defineProps({
                 </a>
             </div>
             <div class="pt-2">
-                <a href="#" class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
+                <a href="/ecer/settings"
+                    class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
                     <div class="w-8 h-8 shrink-0 p-0.5"><img :src="ImgStg" alt=""></div>
                     <span class="ml-4">Setting</span>
                 </a>

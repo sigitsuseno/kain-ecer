@@ -202,125 +202,125 @@ const formatDate = (dateString) => {
 }
 
 
-// --- LOGIC PRINT BLUETOOTH ---
-const isPrinting = ref(false)
+// // --- LOGIC PRINT BLUETOOTH ---
+// const isPrinting = ref(false)
 
-// Konstanta perintah ESC/POS (Bahasa Printer)
-const ESC = '\x1B';
-const GS = '\x1D';
-const COMMANDS = {
-    INIT: ESC + '@', // Reset Printer
-    CENTER: ESC + 'a' + '\x01', // Rata Tengah
-    LEFT: ESC + 'a' + '\x00', // Rata Kiri
-    RIGHT: ESC + 'a' + '\x02', // Rata Kanan
-    BOLD_ON: ESC + 'E' + '\x01', // Bold Nyala
-    BOLD_OFF: ESC + 'E' + '\x00', // Bold Mati
-    CUT: GS + 'V' + '\x41' + '\x00', // Potong Kertas (jika support)
-    FEED: ESC + 'd' + '\x02', // Feed 2 baris
-}
+// // Konstanta perintah ESC/POS (Bahasa Printer)
+// const ESC = '\x1B';
+// const GS = '\x1D';
+// const COMMANDS = {
+//     INIT: ESC + '@', // Reset Printer
+//     CENTER: ESC + 'a' + '\x01', // Rata Tengah
+//     LEFT: ESC + 'a' + '\x00', // Rata Kiri
+//     RIGHT: ESC + 'a' + '\x02', // Rata Kanan
+//     BOLD_ON: ESC + 'E' + '\x01', // Bold Nyala
+//     BOLD_OFF: ESC + 'E' + '\x00', // Bold Mati
+//     CUT: GS + 'V' + '\x41' + '\x00', // Potong Kertas (jika support)
+//     FEED: ESC + 'd' + '\x02', // Feed 2 baris
+// }
 
-// Helper untuk membuat spasi agar teks rata kanan/kiri rapi
-const padText = (left, right, width = 32) => {
-    // Default lebar kertas 58mm biasanya 32 karakter
-    let spaces = width - left.length - right.length;
-    if (spaces < 0) spaces = 1;
-    return left + ' '.repeat(spaces) + right + '\n';
-}
+// // Helper untuk membuat spasi agar teks rata kanan/kiri rapi
+// const padText = (left, right, width = 32) => {
+//     // Default lebar kertas 58mm biasanya 32 karakter
+//     let spaces = width - left.length - right.length;
+//     if (spaces < 0) spaces = 1;
+//     return left + ' '.repeat(spaces) + right + '\n';
+// }
 
-const printBluetooth = async () => {
-    isPrinting.value = true;
-    try {
-        // 1. Request Device (Mencari Printer Bluetooth)
-        const device = await navigator.bluetooth.requestDevice({
-            filters: [
-                { services: ['000018f0-0000-1000-8000-00805f9b34fb'] } // UUID standar printer thermal
-            ],
-            optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
-        });
+// const printBluetooth = async () => {
+//     isPrinting.value = true;
+//     try {
+//         // 1. Request Device (Mencari Printer Bluetooth)
+//         const device = await navigator.bluetooth.requestDevice({
+//             filters: [
+//                 { services: ['000018f0-0000-1000-8000-00805f9b34fb'] } // UUID standar printer thermal
+//             ],
+//             optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+//         });
 
-        // 2. Connect ke GATT Server
-        const server = await device.gatt.connect();
-        const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-        const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+//         // 2. Connect ke GATT Server
+//         const server = await device.gatt.connect();
+//         const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+//         const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
 
-        // 3. Susun Data Struk
-        let receipt = '';
+//         // 3. Susun Data Struk
+//         let receipt = '';
 
-        // --- HEADER ---
-        receipt += COMMANDS.INIT;
-        receipt += COMMANDS.CENTER;
-        receipt += COMMANDS.BOLD_ON;
-        receipt += "TOKO KAIN ANDA\n"; // Ganti Nama Toko
-        receipt += COMMANDS.BOLD_OFF;
-        receipt += "Jl. Contoh No. 123, Kota\n";
-        receipt += "--------------------------------\n"; // 32 dash
+//         // --- HEADER ---
+//         receipt += COMMANDS.INIT;
+//         receipt += COMMANDS.CENTER;
+//         receipt += COMMANDS.BOLD_ON;
+//         receipt += "UTEX\n"; // Ganti Nama Toko
+//         receipt += COMMANDS.BOLD_OFF;
+//         receipt += "Jl. Contoh No. 123, Kota\n";
+//         receipt += "--------------------------------\n"; // 32 dash
 
-        receipt += COMMANDS.LEFT;
-        receipt += `No: ${props.penjualan.nomer}\n`;
-        receipt += `Tgl: ${props.penjualan.tanggal}\n`;
-        receipt += `Plg: ${props.penjualan.pelanggan?.nama || 'Umum'}\n`;
-        receipt += "--------------------------------\n";
+//         receipt += COMMANDS.LEFT;
+//         receipt += `No      : ${props.penjualan.nomer}\n`;
+//         receipt += `Tgl     : ${props.penjualan.tanggal}\n`;
+//         receipt += `Plg     : ${props.penjualan.pelanggan?.nama || 'Umum'}\n`;
+//         receipt += "--------------------------------\n";
 
-        // --- ITEMS ---
-        // Looping item penjualan
-        if (props.penjualan.items && props.penjualan.items.length > 0) {
-            props.penjualan.items.forEach(item => {
-                // Nama Produk
-                let namaProduk = item.varian?.produk?.nama || 'Item';
-                let namaVarian = item.varian?.nama || '';
-                receipt += `${namaProduk} ${namaVarian}\n`;
+//         // --- ITEMS ---
+//         // Looping item penjualan
+//         if (props.penjualan.items && props.penjualan.items.length > 0) {
+//             props.penjualan.items.forEach(item => {
+//                 // Nama Produk
+//                 let namaProduk = item.varian?.produk?.nama || 'Item';
+//                 let namaVarian = item.varian?.nama || '';
+//                 receipt += `${namaProduk} ${namaVarian}\n`;
 
-                // Qty x Harga
-                // Contoh: 2.5 m x 10.000 = 25.000
-                let qtyInfo = `${parseFloat(item.qty)} ${item.satuan || ''} x ${formatRupiah(item.harga_jual)}`;
-                let subtotalItem = formatRupiah(item.subtotal);
+//                 // Qty x Harga
+//                 // Contoh: 2.5 m x 10.000 = 25.000
+//                 let qtyInfo = `${parseFloat(item.qty)} ${item.satuan.inisial || ''} x ${formatRupiah(item.harga)}`;
+//                 let subtotalItem = formatRupiah(item.jumlah_harga);
 
-                receipt += padText(qtyInfo, subtotalItem);
-            });
-        }
-        receipt += "--------------------------------\n";
+//                 receipt += padText(qtyInfo, subtotalItem);
+//             });
+//         }
+//         receipt += "--------------------------------\n";
 
-        // --- TOTAL ---
-        receipt += padText("Subtotal", formatRupiah(props.penjualan.total_penjualan));
-        if (props.penjualan.diskon > 0) {
-            receipt += padText("Diskon", "-" + formatRupiah(props.penjualan.diskon));
-        }
-        if (props.penjualan.ongkir > 0) {
-            receipt += padText("Ongkir", formatRupiah(props.penjualan.ongkir));
-        }
+//         // --- TOTAL ---
+//         receipt += padText("Subtotal", formatRupiah(props.penjualan.total_penjualan));
+//         if (props.penjualan.diskon > 0) {
+//             receipt += padText("Diskon", "-" + formatRupiah(props.penjualan.diskon));
+//         }
+//         if (props.penjualan.ongkir > 0) {
+//             receipt += padText("Ongkir", formatRupiah(props.penjualan.ongkir));
+//         }
 
-        receipt += COMMANDS.BOLD_ON;
-        receipt += padText("TOTAL", formatRupiah(grandTotal.value));
-        receipt += COMMANDS.BOLD_OFF;
-        receipt += "--------------------------------\n";
+//         receipt += COMMANDS.BOLD_ON;
+//         receipt += padText("TOTAL", formatRupiah(grandTotal.value));
+//         receipt += COMMANDS.BOLD_OFF;
+//         receipt += "--------------------------------\n";
 
-        // --- FOOTER ---
-        receipt += COMMANDS.CENTER;
-        receipt += "Terima Kasih\n";
-        receipt += "Barang yang sudah dibeli\n";
-        receipt += "tidak dapat ditukar/dikembalikan\n";
-        receipt += COMMANDS.FEED; // Feed kertas agar mudah disobek
+//         // --- FOOTER ---
+//         receipt += COMMANDS.CENTER;
+//         receipt += "Terima Kasih\n";
+//         receipt += "Barang yang sudah dibeli\n";
+//         receipt += "tidak dapat ditukar/dikembalikan\n";
+//         receipt += COMMANDS.FEED; // Feed kertas agar mudah disobek
 
-        // 4. Encode ke Unit8Array dan Kirim ke Printer
-        const encoder = new TextEncoder();
-        const data = encoder.encode(receipt);
+//         // 4. Encode ke Unit8Array dan Kirim ke Printer
+//         const encoder = new TextEncoder();
+//         const data = encoder.encode(receipt);
 
-        // Kirim data dalam chunk (max 512 bytes) untuk mencegah buffer overflow di printer murah
-        const chunkSize = 100;
-        for (let i = 0; i < data.length; i += chunkSize) {
-            const chunk = data.slice(i, i + chunkSize);
-            await characteristic.writeValue(chunk);
-        }
+//         // Kirim data dalam chunk (max 512 bytes) untuk mencegah buffer overflow di printer murah
+//         const chunkSize = 100;
+//         for (let i = 0; i < data.length; i += chunkSize) {
+//             const chunk = data.slice(i, i + chunkSize);
+//             await characteristic.writeValue(chunk);
+//         }
 
-        alert("Struk berhasil dicetak!");
+//         alert("Struk berhasil dicetak!");
 
-    } catch (error) {
-        console.error('Bluetooth Error:', error);
-        alert('Gagal mencetak: ' + error.message);
-    } finally {
-        isPrinting.value = false;
-    }
-}
+//     } catch (error) {
+//         console.error('Bluetooth Error:', error);
+//         alert('Gagal mencetak: ' + error.message);
+//     } finally {
+//         isPrinting.value = false;
+//     }
+// }
 
 </script>
 <template>

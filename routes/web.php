@@ -1,20 +1,41 @@
 <?php
 
-
-
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Dashboard\SettingController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Ecer\BankController;
+use App\Http\Controllers\Ecer\EcerAkunController;
 use App\Http\Controllers\Ecer\EcerController;
+use App\Http\Controllers\Ecer\EcerSettingController;
 use App\Http\Controllers\Ecer\PembayaranEcerController;
 use App\Http\Controllers\Ecer\PenjualanEcerController;
 use App\Http\Controllers\Ecer\ProdukEcerController;
 use App\Http\Controllers\Ecer\StokEcerController;
 use App\Http\Controllers\Ecer\TransaksiPenjualanEceranController;
+use App\Http\Controllers\Grosir\AkunController;
+use App\Http\Controllers\Grosir\CategoryGrosirController;
+use App\Http\Controllers\Grosir\GrosirController;
+use App\Http\Controllers\Grosir\GudangGrosirController;
+use App\Http\Controllers\Grosir\MasterGrosirController;
+use App\Http\Controllers\Grosir\PelangganGrosirController;
 use App\Http\Controllers\Grosir\PenerimaanController;
 use App\Http\Controllers\Grosir\PenjualanGrosirController;
+use App\Http\Controllers\Grosir\ProdukGrosirController;
+use App\Http\Controllers\Grosir\SettingController as GrosirSettingController;
 use App\Http\Controllers\Grosir\StokGrosirController;
+use App\Http\Controllers\Grosir\SupplierGrosirController;
+use App\Http\Controllers\Master\CategoryController;
+use App\Http\Controllers\Master\GudangController;
+use App\Http\Controllers\Master\PelangganController;
+use App\Http\Controllers\Master\ProductController;
+use App\Http\Controllers\Master\SupplierController;
 use App\Http\Controllers\PrintController;
+use App\Http\Controllers\Setting\BankPembayaranController;
 use App\Models\Penerimaan;
+use Faker\Guesser\Name;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
 
 Route::middleware(['auth'])->group(function () {
     // Tambahkan ini: Route khusus pencarian produk
@@ -156,6 +177,7 @@ Route::prefix('ecer')
             ->controller(PenjualanEcerController::class)
             ->group(function () {
                 Route::get('/', 'index')->name('index');
+                Route::get('/print-tagihan/{id}', 'printTagihan')->name('print-tagihan');
 
 
                 Route::prefix('transaksi')
@@ -166,6 +188,7 @@ Route::prefix('ecer')
                         Route::get('/list', 'list')->name('list');
                         Route::post('/draft', 'storeDraft')->name('draft');
                         Route::post('/item', 'simpanItems')->name('item');
+                        Route::post('/update/{id}', 'update')->name('update');
                         Route::delete('/{id}', 'hapusPenjualan')->name('hapus');
                     });
 
@@ -189,6 +212,36 @@ Route::prefix('ecer')
                 Route::post('/', 'storeTransfer')->name('store-transfer');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
+            });
+
+        Route::prefix('settings')
+            ->name('settings.')
+            ->controller(EcerSettingController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'createTransfer')->name('create-transfer');
+                Route::post('/', 'storeTransfer')->name('store-transfer');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+
+                Route::prefix('akun')
+                    ->name('akun.')
+                    ->controller(EcerAkunController::class)
+                    ->group(function () {
+                        Route::get('/', 'index')->name('index');
+                        Route::get('/create', 'create')->name('create');
+                        Route::post('/', 'store')->name('store');
+                        Route::put('/{id}', 'update')->name('update');
+                        Route::delete('/{id}', 'destroy')->name('destroy');
+                    });
+                Route::prefix('bank')
+                    ->name('bank.')
+                    ->controller(BankController::class)
+                    ->group(function () {
+                        Route::get('/', 'index')->name('index');
+                        Route::post('/', 'store')->name('store');
+                        Route::delete('/{id}', 'destroy')->name('destroy');
+                    });
             });
     });
 
@@ -290,6 +343,27 @@ Route::prefix('grosir')
                 // Route::post('/', 'storeTransfer')->name('store-transfer');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
+            });
+        Route::prefix('settings')
+            ->name('settings.')
+            ->controller(GrosirSettingController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'createTransfer')->name('create-transfer');
+                Route::post('/', 'storeTransfer')->name('store-transfer');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+
+                Route::prefix('akun')
+                    ->name('akun.')
+                    ->controller(AkunController::class)
+                    ->group(function () {
+                        Route::get('/', 'index')->name('index');
+                        Route::get('/create', 'create')->name('create');
+                        Route::post('/', 'store')->name('store');
+                        Route::put('/{id}', 'update')->name('update');
+                        Route::delete('/{id}', 'destroy')->name('destroy');
+                    });
             });
     });
 

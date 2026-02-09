@@ -1,47 +1,41 @@
 <template>
     <div class="w-full h-[calc(100vh-48px)] relative">
-        <div class="w-full h-20 bg-amber-200 border-b-4 border-blue-900 flex items-center justify-between px-4 gap-1">
-            <div class="flex items-center gap-2">
-                <button @click="openCreate"
-                    class="w-16 h-16 bg-white rounded-sm shadow hover:shadow-lg hover:bg-white/50 flex flex-col items-center justify-center gap-2">
-                    <div class="w-10 h-8 flex items-center justify-center">
-                        <i class='bx bx-plus text-3xl'></i>
-                    </div>
-                    <span class="text-xs text-center">Kasir</span>
-                </button>
-            </div>
-            <div class="flex items-center gap-2">
-                <!-- <Link href="#"
-                    class="w-16 h-16 bg-white rounded-sm shadow hover:shadow-lg hover:bg-white/50 flex flex-col items-center justify-center gap-2">
-                    <div class="w-10 h-8 flex items-center justify-center">
-                        <i class='bx bx-category text-3xl'></i>
-                    </div>
-                    <span class="text-xs text-center">Kategori</span>
-                </Link> -->
-            </div>
+
+        <div class="w-full h-14 bg-amber-200 flex items-end justify-start gap-1 px-4">
+            <Link href="/ecer/penjualan" class="px-4 py-2 bg-button rounded-t-md text-white">Penjualan</Link>
+            <Link href="/ecer/penjualan/pembayaran" class="px-4 py-2 bg-button rounded-t-md text-white">Pembayaran
+            </Link>
         </div>
 
         <div class="w-full h-[calc(100vh-120px)] bg-indigo-100 overflow-hidden flex flex-col">
-            <div class="w-full h-20 border-b flex items-center justify-start gap-4 px-4 bg-white/50">
-                <label class="flex flex-col w-32">
-                    <span class="text-[10px] uppercase font-bold mb-1">Per Halaman</span>
-                    <select v-model="filter.perPage" @change="submitSearch"
-                        class="bg-white px-2 h-8 rounded-sm outline-none border text-sm">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                    </select>
-                </label>
-                <label class="flex flex-col w-1/4">
-                    <span class="text-[10px] uppercase font-bold mb-1">Cari Nota / Pelanggan</span>
-                    <input v-model="filter.search" @keyup.enter="submitSearch" type="search"
-                        class="bg-white px-4 h-8 rounded-sm outline-none border text-sm"
-                        placeholder="Ketik lalu enter...">
-                </label>
-                <button @click="submitSearch"
-                    class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded shadow-sm mt-4 uppercase">
-                    Filter
-                </button>
+            <div class="flex justify-between bg-white/50 border-b-2 border-primary/50">
+                <div class="w-full h-20 flex items-center justify-start gap-4 px-4 ">
+                    <label class="flex flex-col w-32">
+                        <span class="text-[10px] uppercase font-bold mb-1">Per Halaman</span>
+                        <select v-model="filter.perPage" @change="submitSearch"
+                            class="bg-white px-2 h-8 rounded-sm outline-none border text-sm">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                    </label>
+                    <label class="flex flex-col w-1/4">
+                        <span class="text-[10px] uppercase font-bold mb-1">Cari Nota / Pelanggan</span>
+                        <input v-model="filter.search" @keyup.enter="submitSearch" type="search"
+                            class="bg-white px-4 h-8 rounded-sm outline-none border text-sm"
+                            placeholder="Ketik lalu enter...">
+                    </label>
+                    <button @click="submitSearch"
+                        class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded shadow-sm mt-4 uppercase">
+                        Filter
+                    </button>
+                </div>
+                <div class="px-4 flex items-center justify-end">
+                    <button @click="openCreate"
+                        class="px-3 h-10 whitespace-nowrap bg-button flex items-center justify-center"><i
+                            class='bx bx-plus text-2xl'></i> Nota Penjualan
+                    </button>
+                </div>
             </div>
 
             <div class="flex-1 overflow-y-auto p-4">
@@ -89,24 +83,26 @@
                         </div>
 
                         <div class="py-3 flex justify-center gap-1">
-                            <Link v-if="pnj.status === 'UNPAID'" :href="`/ecer/penjualan/pembayaran/${pnj.id}`"
-                                class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
-                                BAYAR
-                            </Link>
-                            <div v-if="pnj.status === 'DP'">
+                            <div v-if="pnj.status === 'UNPAID'" class="flex flex-col gap-2">
                                 <Link :href="`/ecer/penjualan/pembayaran/${pnj.id}`"
-                                    class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
+                                    class="px-3 py-2 bg-green-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
                                     BAYAR
                                 </Link>
-                                <Link :href="`/ecer/penjualan/pembayaran/print/${pnj.id}`"
-                                    class="px-3 py-1 bg-green-600 text-white rounded text-[10px] font-bold hover:bg-green-700 shadow-sm transition-all active:scale-95">
-                                    PRINT
-                                </Link>
+                                <button @click="confirmDelete(pnj.id)"
+                                    class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">
+                                    Hapus
+                                </button>
                             </div>
-                            <Link v-if="pnj.status === 'LUNAS'" :href="`/ecer/penjualan/pembayaran/print/${pnj.id}`"
-                                class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
+                            <Link v-if="pnj.status === 'DP'" :href="`/ecer/penjualan/pembayaran/print/${pnj.id}`"
+                                class="px-3 py-2 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
                                 PRINT
                             </Link>
+                            <div v-if="pnj.status === 'DRAFT'">
+                                <Link :href="`/ecer/penjualan/transaksi`"
+                                    class="px-3 py-2 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition-all active:scale-95">
+                                    PENJUALAN
+                                </Link>
+                            </div>
                         </div>
                     </div>
 
@@ -186,5 +182,15 @@ const statusClass = (status) => {
         LUNAS: 'bg-green-100 text-green-700 border-green-200',
     };
     return classes[status] ?? 'bg-slate-100 text-slate-500';
+}
+
+const confirmDelete = (id) => {
+    if (confirm('Hapus transaksi ini? Stok barang akan dikembalikan otomatis.')) {
+        router.delete(`/ecer/penjualan/transaksi/${id}`, {
+            onSuccess: () => {
+                alert('Transaksi berhasil dihapus dan stok kembali.');
+            }
+        });
+    }
 }
 </script>

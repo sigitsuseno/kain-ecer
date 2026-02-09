@@ -68,15 +68,18 @@ class StokEcerController extends Controller
         DB::transaction(function () use ($request) {
 
             foreach ($request->selected_rolls as $stok) {
+
                 $stokGrosir = Stok::findOrFail($stok['stok_id']);
 
-                $stokEcer = Stok::create([
-                    'nomer'      => 'TRF-' . now()->format('YmdHisv'),
-                    'gudang_id'  => 1,
-                    'varian_id'  => $stokGrosir->varian_id,
-                    'total_qty'  => 0,
-                    'total_unit' => 1,
-                ]);
+                $stokEcer = Stok::firstOrCreate(
+                    ['varian_id' => $stokGrosir->varian_id, 'gudang_id' => 1],
+                    [
+                        'nomer' => 'TRF-' . now()->format('YmdHisv'),
+                        'total_unit' => 0,
+                        'total_qty' => 0,
+                        'tanggal_kadaluarsa' => null,
+                    ]
+                );
 
                 $totalQty = 0;
                 $totalUnit = 0;
@@ -86,7 +89,7 @@ class StokEcerController extends Controller
                 foreach ($stok['details'] as $rollData) {
 
 
-                    // 1. Ambil data asli Roll & Stok Asal
+
                     $detail = ProdukDetail::findOrFail($rollData['id']);
 
                     $detail->update([
@@ -108,12 +111,9 @@ class StokEcerController extends Controller
                     $totalQty += $detail->qty;
                     $totalUnit += 1;
                 }
-
-                $stokEcer->update([
-                    'total_qty'  => $totalQty,
-                    'total_unit' => $totalUnit,
-                ]);
-
+                $stokEcer->increment('total_unit', $totalUnit);
+                $stokEcer->increment('total_qty', $totalQty);
+                // dd($stokEcer);
 
                 $stokGrosir->decrement('total_unit', $totalUnit);
                 $stokGrosir->decrement('total_qty', $totalQty);

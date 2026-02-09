@@ -72,11 +72,17 @@ function openView(produk) {
     selectedProduk.value = produk;
     modalOpen.value = true;
 }
+
+const mode_tampil = ref('card')
+
+const openMode = (mode) => {
+    mode_tampil.value = mode;
+};
 </script>
 
 <template>
-    <div class="w-full h-[calc(100vh-48px)] relative">
-        <div class="w-full h-20 bg-amber-200 border-b-4 border-blue-900 flex items-center justify-between px-4 gap-1">
+    <div class="w-full h-[calc(100vh-40px)] relative">
+        <!-- <div class="w-full h-20 bg-amber-200 border-b-4 border-blue-900 flex items-center justify-between px-4 gap-1">
             <div class="flex items-center gap-2">
                 <button @click="openCreate"
                     class="w-16 h-16 bg-white rounded-sm shadow hover:shadow-lg hover:bg-white/50 flex flex-col items-center justify-center gap-2">
@@ -86,19 +92,10 @@ function openView(produk) {
                     <span class="text-xs text-center">Produk</span>
                 </button>
             </div>
-            <div class="flex items-center gap-2">
-                <Link href="#"
-                    class="w-16 h-16 bg-white rounded-sm shadow hover:shadow-lg hover:bg-white/50 flex flex-col items-center justify-center gap-2">
-                    <div class="w-10 h-8 flex items-center justify-center">
-                        <i class='bx bx-plus text-3xl'></i>
-                    </div>
-                    <span class="text-xs text-center">Kategori</span>
-                </Link>
-            </div>
-        </div>
+        </div> -->
 
-        <div class="w-full h-[calc(100vh-120px)] bg-indigo-100">
-            <div class="w-full h-20 border-b flex items-center justify-start gap-4 px-4">
+        <div class="w-full h-[calc(100vh-40px)] bg-indigo-100 ">
+            <div class="w-full h-20 border-b flex items-center justify-start gap-4 px-4 relative">
                 <label class="flex flex-col w-1/12">
                     <span class="text-xs mb-1">Per Halaman</span>
                     <select v-model="perPage" @change="submitSearch"
@@ -133,11 +130,59 @@ function openView(produk) {
                     class="px-5 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold rounded-md transition-all active:scale-95 mt-5">
                     Reset
                 </button>
+                <div class="absolute bottom-2 right-4 flex gap-2">
+                    <button @click="openMode('card')" :class="[mode_tampil === 'card' ? 'bg-blue-600' : 'bg-gray-400']"
+                        class="px-3 py-1 text-white transition-colors">
+                        Card
+                    </button>
+
+                    <button @click="openMode('tabel')"
+                        :class="[mode_tampil === 'tabel' ? 'bg-blue-600' : 'bg-gray-400']"
+                        class="px-3 py-1 text-white transition-colors">
+                        Tabel
+                    </button>
+                </div>
             </div>
 
-            <div class="w-full h-[calc(100vh-200px)] overflow-y-auto">
-                <div class="w-full p-4 overflow-x-auto">
-
+            <div class="w-full h-[calc(100vh-120px)] overflow-y-auto">
+                <div v-if="mode_tampil === 'card'" class="grid grid-cols-5 gap-3 p-6">
+                    <button @click="openCreate"
+                        class="w-full bg-button rounded-sm shadow hover:shadow-lg hover:bg-white/50 flex flex-col items-center justify-center gap-2">
+                        <div class="w-10 h-8 flex items-center justify-center">
+                            <i class='bx bx-plus text-3xl'></i>
+                        </div>
+                        <span class="text-base text-center">Produk</span>
+                    </button>
+                    <div v-for="(prd, index) in (varians.data || varians)" :key="prd.id"
+                        class="w-full bg-white rounded-lg shadow p-3">
+                        <h2 class="text-lg font-bold line-clamp-2 uppercase ">{{ prd.produk.nama }}</h2>
+                        <p class="text-blue-700">{{ prd.nama }}</p>
+                        <div class="grid grid-cols-2 gap-2 mt-4">
+                            <div v-for="stc in prd.details" :key="stc.id"
+                                class="w-full flex items-center px-2 py-1 gap-2 justify-center shadow ring rounded-sm">
+                                {{ stc.qty }}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center gap-1 mt-4">
+                            <button @click="openView(prd)"
+                                class="w-1/2 h-8 flex items-center justify-center bg-blue-500 text-white rounded shadow-sm hover:bg-blue-600">
+                                <i class='bx bx-show'></i>
+                            </button>
+                            <button @click="openEdit(prd)"
+                                class="w-1/2 h-8 flex items-center justify-center bg-amber-500 text-white rounded shadow-sm hover:bg-amber-600">
+                                <i class='bx bx-edit'></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div v-else class="w-full p-4 overflow-x-auto">
+                    <button @click="openCreate"
+                        class="w-full h-10 bg-button rounded-sm shadow hover:shadow-lg hover:bg-white/50 flex flex items-center justify-center gap-2 mb-4">
+                        <div class="w-10 h-8 flex items-center justify-center">
+                            <i class='bx bx-plus text-3xl'></i>
+                        </div>
+                        <span class="text-base text-center">Produk</span>
+                    </button>
                     <div
                         class="grid grid-cols-[50px_200px_100px_100px_1fr_100px] xl:grid-cols-[50px_250px_150px_120px_120px_1fr_100px] min-w-200 items-center text-center bg-primary text-white font-semibold">
                         <div class="px-2 py-2 border-r border-white/20">No.</div>
@@ -154,7 +199,7 @@ function openView(produk) {
 
                         <div class="h-12 flex items-center justify-center">{{ index + 1 }}</div>
                         <div class="h-12 px-2 flex items-center text-left truncate">{{ prd.produk.nama
-                            }}</div>
+                        }}</div>
                         <div class="h-12 px-2 flex items-center justify-center">{{ prd.nama }}</div>
                         <div class="h-12 px-2 flex items-center justify-center capitalize">{{ prd.tipe }}</div>
                         <div class="h-12 px-2 flex items-center justify-center">

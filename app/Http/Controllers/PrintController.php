@@ -25,7 +25,7 @@ class PrintController extends Controller
             $printer->selectPrintMode();
             $printer->text("Jl. Musi No.12, RT.05/RW.02\n");
             $printer->text(" Sidomulyo, Kec. Ungaran Tim., Kab. Semarang\n");
-            $printer->text(str_repeat("-", 42) . "\n");
+            $printer->text(str_repeat("-", 46) . "\n");
 
             // --- INFO NOTA ---
             $printer->setJustification(Printer::JUSTIFY_LEFT);
@@ -34,7 +34,7 @@ class PrintController extends Controller
             $printer->text($this->renderLine("Tanggal", date('d/m/Y', strtotime($data['tanggal'] ?? now()))));
             $printer->text($this->renderLine("Plg", $data['pelanggan']['nama'] ?? 'Umum'));
             $printer->text($this->renderLine("Kasir", $data['user']['name'] ?? 'Staff'));
-            $printer->text(str_repeat("-", 42) . "\n");
+            $printer->text(str_repeat("-", 46) . "\n");
 
             // --- ITEMS ---
             foreach ($data['items'] as $item) {
@@ -50,10 +50,10 @@ class PrintController extends Controller
                     $subtotal = number_format($dtp['jumlah_harga']);
 
                     // Layout:  10 Yrd @25.000          250.000
-                    $printer->text($this->formatRow($qtyInfo . " " . $priceInfo, $subtotal) . "\n");
+                    $printer->text($this->formatRow($qtyInfo . " x " . $priceInfo, $subtotal) . "\n");
                 }
             }
-            $printer->text(str_repeat("-", 42) . "\n");
+            $printer->text(str_repeat("-", 46) . "\n");
 
             // --- TOTAL ---
             $printer->setEmphasis(true);
@@ -102,7 +102,7 @@ class PrintController extends Controller
     }
 
     // Fungsi pembantu rata kiri-kanan (Items/Total)
-    private function formatRow($left, $right, $width = 42)
+    private function formatRow($left, $right, $width = 46)
     {
         $space = $width - strlen($left) - strlen($right);
         return $left . str_repeat(" ", max(0, $space)) . $right;

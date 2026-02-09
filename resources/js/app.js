@@ -7,6 +7,9 @@ import { createInertiaApp } from "@inertiajs/vue3";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 import DashLayout from "./Layouts/DashLayout.vue";
 
+import { registerSW } from "virtual:pwa-register";
+registerSW({ immediate: true });
+
 createInertiaApp({
     resolve: (name) => {
         const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });

@@ -81,5 +81,9 @@ class DatabaseSeeder extends Seeder
                 ['inisial' => $item['inisial']]
             );
         }
+
+        $this->call([
+            AkunJurnalSeeder::class,
+        ]);
     }
 }

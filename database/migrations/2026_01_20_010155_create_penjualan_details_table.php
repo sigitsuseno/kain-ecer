@@ -20,6 +20,7 @@ return new class extends Migration
             $table->decimal('harga', 19, 2)->default(0);
             $table->decimal('jumlah_harga', 19, 2)->default(0);
             $table->string('status')->default('prepare');
+            $table->decimal('is_convert', 15, 2)->default(0);
             $table->timestamps();
         });
     }
