@@ -56,33 +56,26 @@ const props = defineProps({
                     <span class="ml-4">Penjualan</span>
                 </Link>
             </div>
-
-            <!-- <div class="pt-2">
-                <Link href="/dashboard/penerimaan-barang"
-                    class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
-                    <div class="w-8 h-8 shrink-0 p-0.5"><img :src="ImgPnm" alt=""></div>
-                    <span class="ml-4">Penerimaan</span>
-                </Link>
-            </div> -->
             <div class="pt-2">
-                <a href="/ecer/stok"
+                <Link href="/ecer/stok"
                     class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
                     <div class="w-8 h-8 shrink-0 p-0.5"><img :src="ImgStc" alt=""></div>
                     <span class="ml-4">Stock</span>
-                </a>
+                </Link>
             </div>
             <div class="pt-2">
-                <a href="#" class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
+                <Link href="/ecer/laporan/penjualan"
+                    class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
                     <div class="w-8 h-8 shrink-0 p-0.5"><img :src="ImgLpr" alt=""></div>
                     <span class="ml-4">Laporan</span>
-                </a>
+                </Link>
             </div>
             <div class="pt-2">
-                <a href="/ecer/settings"
+                <Link href="/ecer/settings"
                     class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10">
                     <div class="w-8 h-8 shrink-0 p-0.5"><img :src="ImgStg" alt=""></div>
                     <span class="ml-4">Setting</span>
-                </a>
+                </Link>
             </div>
             <Link :href="route('logout')" method="post" as="button"
                 class="w-full flex items-center justify-start flex-nowrap px-4 py-1 hover:bg-amber-50/10 cursor-pointer">

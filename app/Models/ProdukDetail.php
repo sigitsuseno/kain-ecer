@@ -9,6 +9,7 @@ class ProdukDetail extends Model
     protected $fillable = [
         'gudang_id',
         'varian_id',
+        'barcode',
         'stok_id',
         'old_id',
         'satuan_id',

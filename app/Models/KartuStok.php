@@ -8,7 +8,7 @@ class KartuStok extends Model
 {
     protected $guarded = ['id'];
 
-    public function details()
+    public function detail()
     {
         return $this->belongsTo(ProdukDetail::class, 'produk_detail_id');
     }

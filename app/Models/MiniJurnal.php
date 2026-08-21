@@ -14,6 +14,7 @@ class MiniJurnal extends Model
         'keterangan',
         'jurnalable_type',
         'jurnalable_id',
+        'pembayaran_id',
         'pelanggan_id',
         'total_amount'
     ];

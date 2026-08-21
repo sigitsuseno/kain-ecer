@@ -18,6 +18,7 @@ return new class extends Migration
             // Kolom Polymorphic untuk referensi (id_pembayaran, id_retur, dll)
             $table->string('jurnalable_type')->nullable();
             $table->unsignedBigInteger('jurnalable_id')->nullable();
+            $table->unsignedBigInteger('pembayaran_id')->nullable();
 
             // Relasi ke Customer agar mudah tarik laporan piutang/saldo per orang
             $table->foreignId('pelanggan_id')->nullable()->constrained('pelanggans');

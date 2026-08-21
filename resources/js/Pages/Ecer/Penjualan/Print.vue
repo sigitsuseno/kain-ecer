@@ -12,72 +12,76 @@
             <div class="w-full flex flex-col bg-slate-100 relative print:bg-white overflow-y-auto">
                 <div class="flex flex-col items-center justify-center py-10 print:py-0">
                     <h2 class="font-bold text-lg mb-4 print:hidden">Pratinjau Nota</h2>
+                    <div id="gambar" class="p-4 bg-white">
+                        <div id="printable-receipt" class="w-[74mm] bg-white print:shadow-none print:p-0 font-mono">
+                            <div class="receipt-header text-xs border-b border-dashed pb-2 text-center">
+                                <h2 class="store-name font-bold text-base">UTEX</h2>
+                                <p>Jl. Musi No.12, RT.05/RW.02</p>
+                                <p>Sidomulyo, Kec. Ungaran Tim., Kab. Semarang</p>
+                            </div>
 
-                    <div id="printable-receipt"
-                        class="w-[80mm] shadow bg-white p-4 print:shadow-none print:p-0 font-mono">
-                        <div class="receipt-header text-xs border-b border-dashed pb-2 text-center">
-                            <h2 class="store-name font-bold text-base">UTEX</h2>
-                            <p>Jl. Musi No.12, RT.05/RW.02</p>
-                            <p>Sidomulyo, Kec. Ungaran Tim., Kab. Semarang</p>
-                        </div>
+                            <div class="receipt-info text-xs grid grid-cols-[30%_5%_1fr] py-2 border-b border-dashed">
+                                <span>Nota</span><span>:</span><span>{{ dataNota.nomer }}</span>
+                                <span>Tanggal</span><span>:</span><span>{{ tanggal_indo }}</span>
+                                <span>Pelanggan</span><span>:</span><span>{{ dataNota.pelanggan }}</span>
+                                <span>PJ</span><span>:</span><span>{{ dataNota.marketing }}</span>
+                            </div>
 
-                        <div class="receipt-info text-xs grid grid-cols-[30%_5%_1fr] py-2 border-b border-dashed">
-                            <span>Nota</span><span>:</span><span>{{ dataNota.nomer }}</span>
-                            <span>Tanggal</span><span>:</span><span>{{ tanggal_indo }}</span>
-                            <span>Pelanggan</span><span>:</span><span>{{ dataNota.pelanggan }}</span>
-                            <span>PJ</span><span>:</span><span>{{ dataNota.marketing }}</span>
-                        </div>
-
-                        <div class="receipt-items py-2 border-b border-dashed">
-                            <div v-for="item in penjualan.items" :key="item.id" class="mb-2">
-                                <div class="item-name text-xs font-bold uppercase">{{ item.varian?.produk?.nama }} - {{
-                                    item.varian?.nama }}</div>
-                                <div v-for="dtp in item.details" :key="dtp.id"
-                                    class="grid grid-cols-[1fr_25%] text-[11px]">
-                                    <div class="text-start text-[10px]">
-                                        {{ dtp.qty }} {{ dtp.satuan?.inisial }} x @{{ formatNumber(dtp.harga) }}
+                            <div class="receipt-items py-2 border-b border-dashed">
+                                <div v-for="item in penjualan.items" :key="item.id" class="mb-2">
+                                    <div class="item-name text-xs font-bold uppercase">{{ item.varian?.produk?.nama }} -
+                                        {{
+                                            item.varian?.nama }}</div>
+                                    <div v-for="dtp in item.details" :key="dtp.id"
+                                        class="grid grid-cols-[1fr_25%] text-[11px]">
+                                        <div class="text-start text-[10px]">
+                                            {{ dtp.qty }} {{ dtp.satuan?.inisial }} x @{{ formatNumber(dtp.harga) }}
+                                        </div>
+                                        <div class="text-end">{{ formatNumber(dtp.jumlah_harga) }}</div>
                                     </div>
-                                    <div class="text-end">{{ formatNumber(dtp.jumlah_harga) }}</div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="receipt-total py-2 space-y-1 text-xs font-mono">
-                            <div class="total-row flex justify-between font-bold text-sm">
-                                <span>TOTAL</span>
-                                <span>{{ formatNumber(dataNota.total) }}</span>
+                            <div class="receipt-total py-2 text-xs font-mono">
+                                <div class="total-row flex justify-between font-bold text-sm">
+                                    <span>TOTAL</span>
+                                    <span>{{ formatNumber(dataNota.total) }}</span>
+                                </div>
+
+                                <div v-if="dataNota.ongkir > 0 || dataNota.diskon > 0"
+                                    class="total-row flex justify-between italic text-[10px]">
+                                    <span>Ongkir / Diskon</span>
+                                    <span>{{ formatNumber(dataNota.ongkir) }} / -{{ formatNumber(dataNota.diskon)
+                                    }}</span>
+                                </div>
+
+                                <div v-for="(pay, pIdx) in listPembayaran" :key="pIdx"
+                                    class="total-row flex justify-between">
+                                    <span class="uppercase">BAYAR ({{ pay.metode }})</span>
+                                    <span>{{ formatNumber(pay.nominal) }}</span>
+                                </div>
+
+                                <div v-if="dataNota.kembalian > 0"
+                                    class="total-row flex justify-between border-t border-dashed pt-1">
+                                    <span>KEMBALI</span>
+                                    <span>{{ formatNumber(dataNota.kembalian) }}</span>
+                                </div>
                             </div>
 
-                            <div v-if="dataNota.ongkir > 0 || dataNota.diskon > 0"
-                                class="total-row flex justify-between italic text-[10px]">
-                                <span>Ongkir / Diskon</span>
-                                <span>{{ formatNumber(dataNota.ongkir) }} / -{{ formatNumber(dataNota.diskon) }}</span>
+                            <div v-if="dataNota.sisaPiutang > 0 && penjualan.status === 'DP'"
+                                class="total-row flex justify-between border-t border-double pt-1 text-[#ff0000] text-sm font-bold">
+                                <span>SISA PIUTANG</span>
+                                <span>{{ formatNumber(dataNota.sisaPiutang) }}</span>
                             </div>
 
-                            <div v-for="(pay, pIdx) in listPembayaran" :key="pIdx"
-                                class="total-row flex justify-between">
-                                <span class="uppercase">BAYAR ({{ pay.metode }})</span>
-                                <span>{{ formatNumber(pay.nominal) }}</span>
+                            <div class="receipt-footer text-center mt-3 text-[9px] uppercase leading-tight">
+                                <p v-if="penjualan.status === 'LUNAS'" class="font-bold text-sm">----- L U N A S -----
+                                </p>
+                                <p>*** Terima Kasih ***</p>
+                                <p>Barang yang sudah dipotong</p>
+                                <p>tidak dapat dikembalikan / ditukar.</p>
+                                <p class="mt-2 font-mono italic">{{ today }} {{ currentTime }}</p>
                             </div>
-
-                            <div v-if="dataNota.kembalian > 0"
-                                class="total-row flex justify-between border-t border-dashed pt-1">
-                                <span>KEMBALI</span>
-                                <span>{{ formatNumber(dataNota.kembalian) }}</span>
-                            </div>
-                        </div>
-
-                        <div v-if="dataNota.sisaPiutang > 0"
-                            class="total-row flex justify-between border-t border-double pt-1 text-[#ff0000] text-sm font-bold">
-                            <span>SISA PIUTANG</span>
-                            <span>{{ formatNumber(dataNota.sisaPiutang) }}</span>
-                        </div>
-
-                        <div class="receipt-footer text-center mt-6 text-[9px] uppercase leading-tight">
-                            <p>*** Terima Kasih ***</p>
-                            <p>Barang yang sudah dipotong</p>
-                            <p>tidak dapat dikembalikan / ditukar.</p>
-                            <p class="mt-2 font-mono italic">{{ today }} {{ currentTime }}</p>
                         </div>
                     </div>
                 </div>
@@ -259,7 +263,7 @@ const HandlePrint = async () => {
         top: 0;
         width: 80mm;
         color: black;
-        font-size: medium;
+        font-size: 12pt;
     }
 }
 </style>

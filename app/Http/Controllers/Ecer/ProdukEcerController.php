@@ -98,7 +98,7 @@ class ProdukEcerController extends Controller
             "deskripsi"   => 'nullable',
         ]);
 
-        // dd($request) 
+        // dd($request);
 
         try {
             DB::beginTransaction();
@@ -120,13 +120,14 @@ class ProdukEcerController extends Controller
                 ]
             );
 
-            // 3. Kelola Varian Produk
-            $varian = ProdukVarian::firstOrCreate(
-                [
+            $varian = ProdukVarian::where('nama', $request->kode_warna)
+                ->where('produk_id', $produk->id)
+                ->first();
+
+            if (!$varian) {
+                $varian = ProdukVarian::create([
                     'produk_id' => $produk->id,
-                    'nama' => $request->kode_warna,
-                ],
-                [
+                    'nama'      => $request->kode_warna,
                     'gudang_id' => 1,
                     'tipe'      => $request->tipe,
                     'lebar'     => $request->lebar_kain ?? 0,
@@ -137,19 +138,18 @@ class ProdukEcerController extends Controller
                     'is_paket'  => false,
                     'harga_beli' => 0,
                     'harga_jual' => 0,
-                ]
-            );
+                ]);
 
-            // 4. Kelola Stok (Hanya buat jika belum ada stok untuk varian ini di gudang tsb)
-            $stok = $varian->stok()->firstOrCreate(
-                ['gudang_id' => 1],
-                [
-                    'nomor' => 'STK-' . str_pad($varian->id, 10, '0', STR_PAD_LEFT),
-                    'tanggal_kadaluarsa' => null,
-                ]
-            );
-
-            // 5. Simpan Detail/History
+                // Buat Stok Header Baru
+                $stok = $varian->stok()->create([
+                    'gudang_id' => 1,
+                    'nomor'     => 'STK-' . str_pad($varian->id, 10, '0', STR_PAD_LEFT),
+                    'total_unit' => 0,
+                    'total_qty'  => 0,
+                ]);
+            } else {
+                $stok = $varian->stok()->where('gudang_id', 1)->first();
+            }
 
             $detail = $varian->details()->create([
                 'gudang_id' => 1,
@@ -160,6 +160,7 @@ class ProdukEcerController extends Controller
                 'status'    => 'tersedia',
             ]);
 
+            // 5. Simpan Detail/History
             if ($detail->stok_id === $stok->id) {
                 $stok->increment('total_unit', 1);
                 $stok->increment('total_qty', $request->panjang ?? 0);
@@ -183,6 +184,7 @@ class ProdukEcerController extends Controller
     {
         // 1. Ambil data dengan relasi lengkap agar efisien
         $varian = ProdukVarian::with(['produk', 'stok', 'details'])->findOrFail($id);
+
         $produkInduk = $varian->produk;
 
         // 2. Validasi
@@ -193,11 +195,17 @@ class ProdukEcerController extends Controller
             "lebar_kain"  => 'nullable|numeric',
         ]);
 
+        // dd($request);
         // 3. Logic Kategori
+        $kategori = Kategori::find($request->kategori_id);
+
         $namaProdukClean = trim(ucwords(strtolower($request->nama_produk)));
-        $kategori = Kategori::firstOrCreate(
-            ['slug' => Str::slug($namaProdukClean)],
-            ['nama_kategori' => $namaProdukClean, 'status' => 'nama']
+        $kategori->update(
+            [
+                'slug' => Str::slug($namaProdukClean),
+                'nama_kategori' => $namaProdukClean,
+                'status' => 'nama'
+            ]
         );
 
         // 4. UPDATE Produk Induk
@@ -216,21 +224,14 @@ class ProdukEcerController extends Controller
             'panjang' => $request->panjang ?? 0,
         ]);
 
-        // 6. UPDATE Stok Fisik (Penting: Gunakan first() atau perulangan)
-        // Asumsi: Satu varian hanya punya satu record stok fisik utama
-        $stok = $varian->stok()->first();
-        if ($stok) {
-            $stok->update([
-                'gudang_id'     => 1,
-                'nomor_batch'   => '-',
-                'total_panjang' => $request->panjang ?? 0,
-                'total_qty'     => 1,
-            ]);
-        }
-
         // 7. UPDATE Detail Isi Paket
         $detail = $varian->details()->first();
-        if ($detail) {
+        $cekPanjang = $request->panjang !== $detail->qty ?? false;
+        $selisihPanjang = $detail->qty - $request->panjang;
+        $stok = $varian->stok;
+
+        if ($cekPanjang) {
+            $stok->decrement('total_qty', $selisihPanjang);
             $detail->update([
                 'satuan_id' => $request->satuan_id,
                 'qty'       => $request->panjang ?? 0,
@@ -238,6 +239,111 @@ class ProdukEcerController extends Controller
             ]);
         }
 
+
+        // 6. UPDATE Stok Fisik (Penting: Gunakan first() atau perulangan)
+        // Asumsi: Satu varian hanya punya satu record stok fisik utama
+
+
+
+
         return back()->with('success', 'Produk dan Varian berhasil diperbarui');
+    }
+    // app/Http/Controllers/ProdukController.php (atau sesuai nama controller Anda)
+
+    public function destroyDetail($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $detail = ProdukDetail::findOrFail($id);
+
+            // Ambil stok terkait untuk dikurangi nilainya
+            $stok = Stok::find($detail->stok_id);
+
+            if ($stok) {
+                $stok->decrement('total_unit', 1);
+                $stok->decrement('total_qty', $detail->qty);
+            }
+
+            // Hapus detail produk
+            $detail->delete();
+
+            DB::commit();
+            return back()->with('success', 'Roll produk berhasil dihapus dan stok diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus detail: ' . $e->getMessage());
+        }
+    }
+
+    public function importCsv(Request $request)
+    {
+        $request->validate(['file' => 'required|mimes:csv,txt']);
+
+        $file = $request->file('file');
+        $handle = fopen($file->getRealPath(), 'r');
+
+        // Skip header
+        fgetcsv($handle, 1000, ",");
+
+        DB::beginTransaction();
+        try {
+            while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                // data[1] = Nama Produk, data[2] = Warna, data[3] = Qty/Panjang
+                $namaProduk = trim($data[1]);
+                $warna = trim($data[2]);
+                $panjang = (float) $data[3];
+
+                if (empty($namaProduk)) continue;
+
+                // 1. Kategori & Produk (Logika Grouping)
+                $kategori = Kategori::firstOrCreate(
+                    ['slug' => Str::slug($namaProduk)],
+                    ['nama_kategori' => $namaProduk, 'status' => 'nama']
+                );
+
+                $produk = Produk::firstOrCreate(
+                    ['nama' => $namaProduk, 'kategori_id' => $kategori->id],
+                    ['satuan_id' => 1] // Sesuaikan ID satuan default (misal: Meter)
+                );
+
+                // 2. Varian (Warna)
+                $varian = ProdukVarian::firstOrCreate(
+                    ['produk_id' => $produk->id, 'nama' => $warna],
+                    [
+                        'gudang_id' => 1,
+                        'sku' => 'SKU-' . strtoupper(Str::random(6)),
+                        'tipe' => 'polos'
+                    ]
+                );
+
+                // 3. Stok Header
+                $stok = Stok::firstOrCreate(
+                    ['varian_id' => $varian->id, 'gudang_id' => 1],
+                    ['nomor' => 'STK-' . str_pad($varian->id, 8, '0', STR_PAD_LEFT)]
+                );
+
+                // 4. Buat Detail (Roll) Baru
+                ProdukDetail::create([
+                    'varian_id' => $varian->id,
+                    'stok_id'   => $stok->id,
+                    'gudang_id' => 1,
+                    'qty'       => $panjang,
+                    'satuan_id' => 1,
+                    'status'    => 'tersedia'
+                ]);
+
+                // 5. Update Total Stok
+                $stok->increment('total_unit', 1);
+                $stok->increment('total_qty', $panjang);
+            }
+
+            DB::commit();
+            fclose($handle);
+            return back()->with('success', 'Data berhasil diimport');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal import: ' . $e->getMessage());
+        }
     }
 }

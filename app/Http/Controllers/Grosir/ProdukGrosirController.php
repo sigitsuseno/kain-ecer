@@ -115,7 +115,7 @@ class ProdukGrosirController extends Controller
                     'nama' => $request->kode_warna
                 ],
                 [
-                    'gudang_id' => 1,
+                    'gudang_id' => 2,
                     'tipe'      => $request->tipe,
                     'lebar'     => $request->lebar_kain ?? 0,
                     'panjang'   => $request->panjang ?? 0,

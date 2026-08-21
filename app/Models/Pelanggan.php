@@ -19,4 +19,8 @@ class Pelanggan extends Model
         'status',
         'saldo',
     ];
+    public function saldo()
+    {
+        return $this->hasOne(MoneyNote::class, 'pelanggal_id');
+    }
 }

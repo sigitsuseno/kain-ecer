@@ -9,6 +9,7 @@ class Pembayaran extends Model
     protected $fillable = [
         'penjualan_id',
         'tanggal',
+        'metode',
         'kode',
         'total',
         'status',

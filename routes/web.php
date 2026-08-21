@@ -7,6 +7,7 @@ use App\Http\Controllers\Ecer\BankController;
 use App\Http\Controllers\Ecer\EcerAkunController;
 use App\Http\Controllers\Ecer\EcerController;
 use App\Http\Controllers\Ecer\EcerSettingController;
+use App\Http\Controllers\Ecer\LaporanEcerController;
 use App\Http\Controllers\Ecer\PembayaranEcerController;
 use App\Http\Controllers\Ecer\PenjualanEcerController;
 use App\Http\Controllers\Ecer\ProdukEcerController;
@@ -133,8 +134,9 @@ Route::prefix('ecer')
                 Route::get('/', 'index')->name('index');
                 Route::post('/', 'store')->name('store');
                 Route::put('/{produk}', 'update')->name('update');
-                Route::delete('/{produk}', 'destroy')->name('destroy');
+                Route::delete('/{id}', 'destroyDetail')->name('destroy');
                 Route::get('/colors', 'colorsByName')->name('colors');
+                Route::post('/import', 'importCsv')->name('import');
             });
         Route::prefix('categories')
             ->name('categories.')
@@ -212,6 +214,21 @@ Route::prefix('ecer')
                 Route::post('/', 'storeTransfer')->name('store-transfer');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
+            });
+        Route::prefix('laporan')
+            ->name('laporan.')
+            ->controller(LaporanEcerController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/', 'store')->name('store');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+                Route::get('/penjualan', 'penjualan')->name('penjualan');
+                Route::get('/saldo', 'saldo')->name('saldo');
+                Route::get('/omset', 'omset')->name('omset');
+                Route::get('/barang', 'barang')->name('barang');
+                Route::get('/stok', 'laporanStok')->name('stok');
+                Route::get('/catatan', 'laporanCatatan')->name('catatan');
+                Route::get('/bonus', 'bonus')->name('bonus');
             });
 
         Route::prefix('settings')

@@ -130,21 +130,22 @@
                             <select v-model="payment.metode"
                                 class="w-full h-10 outline-none rounded border border-slate-200 focus:border-blue-500 px-3 text-sm font-bold bg-white">
                                 <option value="CASH">CASH (TUNAI)</option>
-                                <option value="TRANSFER">TRANSFER BANK</option>
-                                <option value="EDC">MESIN EDC</option>
+                                <option value="TRANSFER-EDC">TRANSFER/EDC</option>
                                 <option value="SPLIT">SPLIT PAYMENT</option>
                                 <option value="DP">DOWN PAYMENT</option>
                             </select>
                         </div>
 
-                        <div v-if="['TRANSFER', 'EDC', 'DP'].includes(payment.metode)"
+                        <div v-if="['TRANSFER-EDC', 'DP'].includes(payment.metode)"
                             class="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-100">
                             <input v-model="payment.bank_asal" placeholder="Bank Asal (Contoh: BCA)"
                                 class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
-                            <select v-model="payment.bank_tujuan" placeholder="Ke Bank Mana? (Contoh: Mandiri Toko)"
+                            <select v-model="payment.bank_tujuan"
                                 class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
-                                <option v-for="b in banks" :value="b.slug">{{ b.nama_bank }}</option>
-
+                                <option value="CASH" disabled>-- Pilih Bank Tujuan --</option>
+                                <option v-for="b in banks" :key="b.id" :value="b.nama_bank">
+                                    {{ b.nama_bank }}
+                                </option>
                             </select>
                             <input v-model="payment.ref" placeholder="No. Ref / Kode Trace"
                                 class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
@@ -214,9 +215,13 @@
                                 <div v-if="payment.split1_metode !== 'CASH'" class="space-y-2">
                                     <input v-model="payment.bank_asal" placeholder="Bank Asal"
                                         class="w-full h-8 text-xs px-2 border rounded">
-                                    <select v-model="payment.bank_tujuan2" placeholder="Bank Tujuan"
-                                        class="w-full h-8 text-xs px-2 border rounded">
-                                        <option v-for="b in banks" :value="b.slug">{{ b.nama_bank }}</option>
+                                    <select v-model="payment.bank_tujuan"
+                                        class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
+                                        <option value="CASH" disabled>-- Pilih Bank Tujuan --</option>
+
+                                        <option v-for="b in banks" :key="b.id" :value="b.nama_bank">
+                                            {{ b.nama_bank }}
+                                        </option>
                                     </select>
                                     <input v-model="payment.ref" placeholder="No. Ref"
                                         class="w-full h-8 text-xs px-2 border rounded">
@@ -243,9 +248,13 @@
                                 <div v-if="payment.split2_metode !== 'CASH'" class="space-y-2">
                                     <input v-model="payment.bank_asal2" placeholder="Bank Asal"
                                         class="w-full h-8 text-xs px-2 border rounded">
-                                    <select v-model="payment.bank_tujuan2" placeholder="Bank Tujuan"
-                                        class="w-full h-8 text-xs px-2 border rounded">
-                                        <option v-for="b in banks" :value="b.slug">{{ b.nama_bank }}</option>
+                                    <select v-model="payment.bank_tujuan2"
+                                        class="w-full h-9 text-sm outline-none rounded border border-blue-200 bg-white px-3 focus:ring-1 ring-blue-400">
+                                        <option value="CASH" disabled>-- Pilih Bank Tujuan --</option>
+
+                                        <option v-for="b in banks" :key="b.id" :value="b.nama_bank">
+                                            {{ b.nama_bank }}
+                                        </option>
                                     </select>
                                     <input v-model="payment.ref2" placeholder="No. Ref"
                                         class="w-full h-8 text-xs px-2 border rounded">
@@ -383,6 +392,7 @@ const handleProsesPembayaran = () => {
     }
 
     const payload = {
+        nominal_asli: props.penjualan.total_penjualan,
         tanggal_bayar: payment.value.tanggal_bayar,
         metode_bayar: payment.value.metode,
         ongkir: ongkir.value,

@@ -60,7 +60,10 @@
                     <div v-for="(pnj, index) in penjualan" :key="pnj.id"
                         class="grid grid-cols-[50px_180px_1fr_150px_150px_120px_100px] items-center text-center border-b hover:bg-slate-50 transition-colors">
                         <div class="py-3 text-xs text-slate-400 font-mono">{{ index + 1 }}</div>
-                        <div class="py-3 px-4 text-left font-bold text-blue-700 text-xs">{{ pnj.nomer }}</div>
+                        <div class="py-3 px-4 text-left font-bold text-blue-700 text-xs">
+                            <div>{{ pnj.nomer }}</div>
+                            <div>{{ pnj.tanggal }}</div>
+                        </div>
                         <div class="py-3 px-4 text-left text-xs uppercase">{{ pnj.pelanggan?.nama || 'Umum' }}</div>
                         <div class="py-3 px-4 text-left text-xs italic">{{ pnj.marketing?.nama || '-' }}</div>
                         <div class="py-3 text-xs font-bold">{{ format(pnj.total_penjualan) }}</div>

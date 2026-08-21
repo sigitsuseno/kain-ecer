@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ecer;
 use App\Http\Controllers\Controller;
 use App\Models\BankPembayaran;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class EcerSettingController extends Controller
 {
@@ -21,9 +22,12 @@ class EcerSettingController extends Controller
 
     public function storebank(Request $request)
     {
-        dd($request);
+
         $request->validate(['nama_bank' => 'required|unique:bank_pembayarans,nama_bank']);
-        BankPembayaran::create($request->only('nama_bank'));
+        BankPembayaran::create([
+            'nama_bank' => $request->nama_bank,
+            'slug' => Str::slug($request->nama_bank)
+        ]);
         return redirect()->back();
     }
 

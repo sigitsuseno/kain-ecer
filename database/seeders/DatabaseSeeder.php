@@ -43,12 +43,12 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Gudang::create([
-            'nama_gudang' => 'Grosir',
+            'nama_gudang' => 'Ecer',
             'lokasi' => 'Ungaran',
             'deskripsi' => 'Lokasi Penjualan',
         ]);
         Gudang::create([
-            'nama_gudang' => 'Ecer',
+            'nama_gudang' => 'Grosir',
             'lokasi' => 'Ungaran',
             'deskripsi' => 'Lokasi Penjualan',
         ]);

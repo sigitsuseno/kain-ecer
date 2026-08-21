@@ -92,6 +92,7 @@ function closeVarianWithDelay() {
 // --- WATCHER ---
 watch(() => props.varians, (p) => {
     if (p) {
+
         form.id = p.id
         form.nama_produk = p.produk?.nama ?? ''
         form.kategori_id = p.produk?.kategori_id ?? ''
@@ -102,7 +103,12 @@ watch(() => props.varians, (p) => {
         form.kode_warna = p.nama ?? ''
         form.tipe = p.tipe ?? 'polos'
         form.lebar_kain = p.lebar ?? ''
-        form.panjang = p.panjang ?? ''
+        if (p.details && p.details.length > 0) {
+            // Ambil qty dari detail pertama dan masukkan ke form.panjang
+            form.panjang = p.details[0].qty ?? 0
+        } else {
+            form.panjang = 0
+        }
     } else {
         form.reset()
 

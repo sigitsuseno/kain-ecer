@@ -83,7 +83,7 @@ class PembayaranEcerController extends Controller
 
         $data = $request->validate([
             'tanggal_bayar' => 'required|date',
-            'metode_bayar' => 'required|in:CASH,TRANSFER,EDC,SPLIT,DP',
+            'metode_bayar' => 'required|in:CASH,TRANSFER-EDC,SPLIT,DP',
             'total_bayar' => 'required|numeric|min:0',
             'yangdibayar' => 'nullable|numeric|min:0',
             'ongkir' => 'nullable|numeric|min:0',
@@ -98,7 +98,6 @@ class PembayaranEcerController extends Controller
         ]);
 
         // dd($request);
-
         return DB::transaction(function () use ($penjualan, $data) {
             $tglBayar = Carbon::parse($data['tanggal_bayar']);
             $totalTagihan = ($data['total_bayar'] + $data['ongkir']) - $data['diskon'];
@@ -129,7 +128,7 @@ class PembayaranEcerController extends Controller
                     'metode_bayar'     => $detail['metode_bayar'],
                     'bank_asal'        => $detail['bank_asal'] ?? null,
                     'akun_asal'        => '',
-                    'bank_tujuan'      => $detail['bank_tujuan'] ?? null,
+                    'bank_tujuan'      => $detail['bank_tujuan'] ?? 'CASH',
                     'no_ref'           => $detail['ref_pembayaran'] ?? null,
                     'jumlah_bayar'     => $data['total_bayar'],
                     'ongkir'            => $data['ongkir'],

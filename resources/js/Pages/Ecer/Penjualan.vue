@@ -58,7 +58,8 @@
                         </div>
 
                         <div class="py-3 px-4 text-left font-bold text-blue-700 text-xs">
-                            {{ pnj.nomer }}
+                            <div>{{ pnj.nomer }}</div>
+                            <div class="text-black">{{ pnj.tanggal }}</div>
                         </div>
 
                         <div class="py-3 px-4 text-left text-xs uppercase">

@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('no_rekening')->nullable();
             $table->string('slug')->nullable();
             $table->string('status')->nullable();
-            $table->string('saldo')->nullable();
+            $table->decimal('saldo', 19, 2)->default(0);
             $table->timestamps();
         });
     }
