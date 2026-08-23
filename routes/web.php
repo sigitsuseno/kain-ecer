@@ -32,8 +32,6 @@ use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\SupplierController;
 use App\Http\Controllers\PrintController;
 use App\Http\Controllers\Setting\BankPembayaranController;
-use App\Models\Penerimaan;
-use Faker\Guesser\Name;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -58,6 +56,7 @@ Route::prefix('auth')
     });
 
 Route::post('/print-thermal', [PrintController::class, 'print'])
+    ->middleware(['auth'])
     ->name('print-thermal');
 
 
@@ -236,10 +235,6 @@ Route::prefix('ecer')
             ->controller(EcerSettingController::class)
             ->group(function () {
                 Route::get('/', 'index')->name('index');
-                Route::get('/create', 'createTransfer')->name('create-transfer');
-                Route::post('/', 'storeTransfer')->name('store-transfer');
-                Route::put('/{id}', 'update')->name('update');
-                Route::delete('/{id}', 'destroy')->name('destroy');
 
                 Route::prefix('akun')
                     ->name('akun.')
@@ -353,6 +348,7 @@ Route::prefix('grosir')
                 Route::get('/update-data', 'updateData')->name('update-data');
                 Route::post('/direct-print/{id}', 'printNota')->name('direct-print');
             });
+        Route::get('/comparing', [PenerimaanController::class, 'comparing'])->middleware(['auth','role:admin-grosir'])->name('comparing');
         Route::prefix('stok')
             ->name('stok.')
             ->controller(StokGrosirController::class)
@@ -368,10 +364,6 @@ Route::prefix('grosir')
             ->controller(GrosirSettingController::class)
             ->group(function () {
                 Route::get('/', 'index')->name('index');
-                Route::get('/create', 'createTransfer')->name('create-transfer');
-                Route::post('/', 'storeTransfer')->name('store-transfer');
-                Route::put('/{id}', 'update')->name('update');
-                Route::delete('/{id}', 'destroy')->name('destroy');
 
                 Route::prefix('akun')
                     ->name('akun.')
@@ -386,4 +378,3 @@ Route::prefix('grosir')
             });
     });
 
-Route::get('/grosir/comparing', [PenerimaanController::class, 'comparing'])->name('comparing');

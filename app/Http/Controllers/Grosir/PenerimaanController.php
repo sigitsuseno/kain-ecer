@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use item;
 
 class PenerimaanController extends Controller
 {
@@ -87,6 +86,7 @@ class PenerimaanController extends Controller
         $request->validate([
             "nomer_pembelian" => "required|string",
             "tanggal_transaksi" => "required|date",
+            "supplier_id" => "nullable|exists:suppliers,id",
             "items" => "required|array|min:1",
             "items.*.varian_id" => "required|exists:produk_varians,id",
             "items.*.details" => "required|array|min:1",
@@ -97,7 +97,7 @@ class PenerimaanController extends Controller
             DB::transaction(function () use ($request) {
                 // 1. Simpan Header Pembelian
                 $pembelian = Pembelian::create([
-                    "supplier_id" => 1,
+                    "supplier_id" => $request->supplier_id ?? 1,
                     "nomer" => $request->nomer_pembelian,
                     "tanggal" => $request->tanggal_transaksi,
                     "status" => "DITERIMA",
@@ -138,7 +138,7 @@ class PenerimaanController extends Controller
                     ]);
 
                     Log::info(
-                        "    Membuat Stok Grup dengan Nomor: " . $stok->nomor,
+                        "    Membuat Stok Grup dengan Nomor: " . $stok->nomer,
                     );
 
                     foreach ($item["details"] as $detailData) {
@@ -239,6 +239,7 @@ class PenerimaanController extends Controller
         $request->validate([
             "nomer_pembelian" => "required|string",
             "tanggal_transaksi" => "required|date",
+            "supplier_id" => "nullable|exists:suppliers,id",
             "items" => "required|array|min:1",
             "items.*.varian_id" => "required|exists:produk_varians,id",
             "items.*.details" => "required|array|min:1",

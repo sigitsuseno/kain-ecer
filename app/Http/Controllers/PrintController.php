@@ -14,7 +14,7 @@ class PrintController extends Controller
     public function print(Request $request)
     {
         try {
-            $connector = new WindowsPrintConnector("POS80");
+            $connector = new WindowsPrintConnector(config("toko.printer_name", env("PRINTER_NAME", "POS80")));
             $printer = new Printer($connector);
 
             $printer->setJustification(Printer::JUSTIFY_CENTER);
@@ -29,7 +29,7 @@ class PrintController extends Controller
                 $imgData = base64_decode($img);
 
                 // 3. Simpan ke file temporary
-                $tempPath = storage_path('app/temp_nota.png');
+                $tempPath = storage_path('app/temp_nota_' . uniqid() . '.png');
                 file_put_contents($tempPath, $imgData);
 
                 // 4. Load ke ESCPOS
@@ -63,7 +63,7 @@ class PrintController extends Controller
     //     $data = $request->all();
     //     try {
     //         // Nama printer harus sesuai dengan sharing name di Windows
-    //         $connector = new WindowsPrintConnector("POS80");
+    //         $connector = new WindowsPrintConnector(config("toko.printer_name", env("PRINTER_NAME", "POS80")));
     //         $printer = new Printer($connector);
 
     //         // --- HEADER ---

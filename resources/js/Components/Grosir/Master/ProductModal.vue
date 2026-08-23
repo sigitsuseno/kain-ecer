@@ -45,8 +45,8 @@ const isDuplicate = computed(() => {
         // Jika sedang EDIT, abaikan produk yang sedang dibuka
         if (isEdit.value && p.id === props.product?.id) return false
 
-        return p.nama_produk?.toLowerCase().trim() === currentNama &&
-            p.kode_warna?.toLowerCase().trim() === currentVarian
+        return (p.nama_produk ?? p.nama ?? p.produk?.nama)?.toLowerCase().trim() === currentNama &&
+            (p.kode_warna ?? p.nama ?? p.nama_varian)?.toLowerCase().trim() === currentVarian
     })
 })
 

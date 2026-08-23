@@ -51,7 +51,7 @@ const warnaDariNamaproduk = computed(() => {
 
             return isSameName
         })
-        .map(p => p.kode_warna) // Ambil kolom kode_warna saja
+        .map(p => p.kode_warna ?? p.nama ?? p.varian?.[0]?.nama ?? '') // schema baru: varian.nama, fallback lama kode_warna
 })
 
 const normalize = (v) =>
@@ -93,8 +93,8 @@ watch(
     () => props.product,
     (p) => {
         if (p) {
-            form.nama_produk = p.nama_produk
-            form.kode_warna = p.kode_warna
+            form.nama_produk = p.nama_produk ?? p.nama ?? ''
+            form.kode_warna = p.kode_warna ?? p.nama ?? p.varian?.[0]?.nama ?? ''
             form.tipe = p.tipe
             form.satuan = p.satuan
             form.lebar_kain = p.lebar_kain
@@ -151,12 +151,12 @@ function submit() {
                 <div v-if="isView" class="grid grid-cols-1 text-sm">
                     <div>
                         <p class="text-slate-500">Nama Produk</p>
-                        <p class="font-medium">{{ product.nama_produk }}</p>
+                        <p class="font-medium">{{ product.nama_produk ?? product.nama ?? '' }}</p>
                     </div>
 
                     <div>
                         <p class="text-slate-500">{{ product.tipe === 'polos' ? 'Kode Warna' : 'Kode Seri' }}</p>
-                        <p class="font-medium">{{ product.kode_warna }}</p>
+                        <p class="font-medium">{{ product.kode_warna ?? product.nama ?? '' }}</p>
                     </div>
 
                     <div>

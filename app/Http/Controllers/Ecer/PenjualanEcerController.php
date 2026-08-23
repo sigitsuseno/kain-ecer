@@ -53,7 +53,7 @@ class PenjualanEcerController extends Controller
         $tgl = Carbon::parse($penjualan->tanggal)->isoFormat('D MMMM YYYY');
 
         try {
-            $connector = new WindowsPrintConnector("POS80");
+            $connector = new WindowsPrintConnector(config("toko.printer_name", env("PRINTER_NAME", "POS80")));
             $printer = new Printer($connector);
             $width = 46; // Ukuran custom Anda
 

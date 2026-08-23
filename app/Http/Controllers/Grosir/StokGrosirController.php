@@ -15,7 +15,7 @@ class StokGrosirController extends Controller
         // Logika Search agar tidak error saat filter digunakan
         if ($request->search) {
             $query->where(function ($q) use ($request) {
-                $q->where('nomor', 'like', "%{$request->search}%")
+                $q->where('nomer', 'like', "%{$request->search}%")
                     ->orWhereHas('varian.produk', function ($p) use ($request) {
                         $p->where('nama', 'like', "%{$request->search}%");
                     });

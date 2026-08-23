@@ -11,12 +11,13 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        return inertia('Dashboard/Master/Category');
+        return inertia('Dashboard/Master', [
+            'activeTab' => 'categories',
+        ]); // fallback: Master.vue handles categories tab - no Category page exists
     }
 
     public function store(Request $request)
     {
-        dd($request);
         $request->validate([
             'nama_kategori' => [
                 'required',
@@ -46,7 +47,6 @@ class CategoryController extends Controller
 
     public function update(Request $request, $id)
     {
-        dd($request);
         $request->validate([
             'nama_kategori' => [
                 'required',

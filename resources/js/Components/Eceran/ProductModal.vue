@@ -46,8 +46,8 @@ const isDuplicate = computed(() => {
         // Jika sedang EDIT, abaikan produk yang sedang dibuka
         if (isEdit.value && p.id === props.produk?.id) return false
 
-        return p.nama_produk?.toLowerCase().trim() === currentNama &&
-            p.kode_warna?.toLowerCase().trim() === currentVarian
+        return (p.nama_produk ?? p.nama)?.toLowerCase().trim() === currentNama &&
+            (p.kode_warna ?? p.nama ?? p.nama_varian)?.toLowerCase().trim() === currentVarian
     })
 })
 
@@ -72,7 +72,7 @@ const uniqueVarians = computed(() => {
     if (!s || isEdit.value) return []
 
     const listSemua = props.allProducts?.data || props.allProducts || []
-    const varianNames = listSemua.map(p => p.nama_varian).filter(Boolean)
+    const varianNames = listSemua.map(p => p.nama_varian ?? p.nama ?? p.kode_warna).filter(Boolean)
     const uniqueList = [...new Set(varianNames)]
 
     return uniqueList.filter(name =>

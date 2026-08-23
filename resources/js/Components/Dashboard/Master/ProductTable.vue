@@ -86,18 +86,18 @@ function resetFilter() {
                     <tr v-for="p in products.data" :key="p.id" class="hover:bg-indigo-50/30 transition-colors group">
                         <td class="px-6 py-4">
                             <div class="font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">{{
-                                p.nama_produk }}</div>
+                                p.nama_produk ?? p.nama }}</div>
                             <div class="text-[10px] text-slate-400 font-mono uppercase tracking-tighter">Stock ID: {{
                                 p.id }}</div>
                         </td>
                         <td class="px-6 py-4">
                             <span
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                                {{ p.kode_warna || 'N/A' }}
+                                {{ (p.kode_warna ?? p.nama) || 'N/A' }}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-sm text-slate-600 font-medium">
-                            {{ p.satuan }}
+                            {{ p.satuan?.inisial ?? p.satuan ?? '-' }}
                         </td>
                         <td class="px-6 py-4 text-sm text-slate-600 font-medium text-center">
                             {{ p.total_qty }}

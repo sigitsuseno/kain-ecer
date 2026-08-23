@@ -22,8 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
         $middleware->validateCsrfTokens(except: [
-            '/print-thermal',
-            '/ecer/penjualan/print-thermal',
+            // print-thermal now protected by auth + CSRF; no public except
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

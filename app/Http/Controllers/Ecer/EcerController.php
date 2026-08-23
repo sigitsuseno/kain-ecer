@@ -26,7 +26,7 @@ class EcerController extends Controller
             ->when(
                 $request->search,
                 fn($q) =>
-                $q->where('kode_warna', 'like', "%{$request->search}%")
+                $q->where('nama', 'like', "%{$request->search}%")
             )
             ->when(
                 $request->kategori,

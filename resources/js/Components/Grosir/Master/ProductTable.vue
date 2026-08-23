@@ -116,10 +116,10 @@ function resetFilter() {
 
                         <td class="px-6 py-4">
                             <div class="font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">
-                                {{ p.produk.nama_produk }}
+                                {{ (p.produk?.nama ?? p.produk?.nama_produk) || '-' }}
                             </div>
                             <div class="text-xs text-slate-900 font-mono uppercase tracking-tighter">
-                                {{ p.nama_varian }}
+                                {{ p.nama ?? p.nama_varian ?? '-' }}
                             </div>
                         </td>
 

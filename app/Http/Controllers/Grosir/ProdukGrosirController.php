@@ -70,8 +70,10 @@ class ProdukGrosirController extends Controller
             'nama_produk' => 'required|string'
         ]);
 
-        return Produk::where('nama_produk', $request->nama_produk)
-            ->pluck('nama');
+                $nama = $request->input('nama_produk') ?? $request->input('nama');
+        $produk = Produk::where('nama', $nama)->first();
+        if (!$produk) return response()->json([]);
+        return ProdukVarian::where('produk_id', $produk->id)->pluck('nama');
     }
 
     public function store(Request $request)

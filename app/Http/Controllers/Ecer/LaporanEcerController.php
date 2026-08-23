@@ -191,9 +191,9 @@ class LaporanEcerController extends Controller
                 'details.satuan'
             ])
             ->get();
-        dd($laporan);
+        // dd($laporan);
         return inertia('Ecer/Laporan/Barang', [
-            'laporan' => $barangKeluar,
+            'laporan' => $laporan,
             'filters' => [
                 'tanggal' => $tanggal
             ]
@@ -211,7 +211,7 @@ class LaporanEcerController extends Controller
 
         // dd($barangKeluar);
         return inertia('Ecer/Laporan/Stok', [
-            'laporan' => $barangKeluar,
+            'laporan' => $laporan,
             'filters' => [
                 'tanggal' => $tanggal
             ]

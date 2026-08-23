@@ -10,7 +10,6 @@ class Pembelian extends Model
         'supplier_id',
         'nomer',
         'tanggal',
-        'supplier_id',
         'total_pembelian',
         'beban_ongkir',
         'beban_biaya',
@@ -20,7 +19,7 @@ class Pembelian extends Model
 
     public function supplier()
     {
-        return $this->belongsTo(Supplier::class . 'supplier_id');
+        return $this->belongsTo(Supplier::class, 'supplier_id');
     }
 
     public function items()

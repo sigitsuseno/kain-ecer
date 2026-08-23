@@ -16,7 +16,7 @@ class EcerSettingController extends Controller
 
     public function bank()
     {
-        return inertia('Ecer/Setting/index');
+        return inertia('Ecer/Setting/Index');
     }
 
 

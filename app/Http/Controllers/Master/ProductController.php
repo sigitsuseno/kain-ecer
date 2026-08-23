@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Gudang;
 use App\Models\Kategori;
 use App\Models\Produk;
+use App\Models\ProdukVarian;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -20,8 +21,10 @@ class ProductController extends Controller
             'nama_produk' => 'required|string'
         ]);
 
-        return Produk::where('nama_produk', $request->nama_produk)
-            ->pluck('nama_produk');
+        $nama = $request->input('nama_produk') ?? $request->input('nama');
+        $produk = Produk::where('nama', $nama)->first();
+        if (!$produk) return response()->json([]);
+        return ProdukVarian::where('produk_id', $produk->id)->pluck('nama');
     }
 
     public function store(Request $request)
@@ -33,12 +36,13 @@ class ProductController extends Controller
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('produks')->where(
+                Rule::unique('produk_varians', 'nama')->where(
                     fn($q) =>
-                    $q->where('nama_produk', $request->nama_produk)
+                    $q->whereHas('produk', fn($qq) => $qq->where('nama', $request->nama_produk))
                 ),
             ],
-            'satuan' => 'required|in:meter,yard,kg',
+            'satuan_id' => 'nullable|exists:satuans,id',
+            'satuan' => 'nullable|in:meter,yard,kg',
             'gudang_id' => 'nullable|exists:gudangs,id',
             'deskripsi' => 'nullable|string',
             'kode_seri' => 'nullable|string',
@@ -50,16 +54,27 @@ class ProductController extends Controller
 
         $kategori = Kategori::firstOrCreate(
             ['slug' => Str::slug($namaProdukClean)],
-            ['nama_kategori' => $namaProdukClean]
+            ['nama_kategori' => $namaProdukClean, 'status' => 'nama']
         );
 
-        $data['kategori_id'] = $kategori->id;
-        $data['nama_produk'] = $namaProdukClean;
+        $produk = Produk::firstOrCreate(
+            ['nama' => $namaProdukClean, 'kategori_id' => $kategori->id],
+            [
+                'satuan_id' => $request->satuan_id ?? 1,
+                'deskripsi' => $request->deskripsi,
+            ]
+        );
 
-        $data['kode_produk'] = 'PRD-' . strtoupper(Str::random(6));
-        $data['slug'] = Str::slug($request->nama_produk);
-
-        Produk::create($data);
+        ProdukVarian::firstOrCreate(
+            ['produk_id' => $produk->id, 'nama' => trim($request->kode_warna)],
+            [
+                'gudang_id' => $request->gudang_id ?? 2,
+                'tipe' => $request->tipe ?? 'polos',
+                'lebar' => is_numeric($request->lebar_kain) ? $request->lebar_kain : 0,
+                'sku' => 'SKU-' . strtoupper(Str::random(6)),
+                'is_paket' => false,
+            ]
+        );
 
         return back()->with('success', 'Produk berhasil ditambahkan');
     }
@@ -70,15 +85,13 @@ class ProductController extends Controller
             'nama_produk' => 'required|string|max:255',
             'kode_warna' => [
                 'required',
-                Rule::unique('produks')
-                    ->ignore($produk->id)
-                    ->where(
-                        fn($q) =>
-                        $q->where('nama_produk', $request->nama_produk)
-                    ),
+                Rule::unique('produk_varians', 'nama')
+                    ->where(fn($q) => $q->where('produk_id', $produk->id))
+                    ->ignore($produk->id),
             ],
-            'satuan' => 'required|in:meter,yard,kg',
-            'gudang_id' => 'required|exists:gudangs,id',
+            'satuan_id' => 'nullable|exists:satuans,id',
+            'satuan' => 'nullable|in:meter,yard,kg',
+            'gudang_id' => 'nullable|exists:gudangs,id',
             'deskripsi' => 'nullable|string',
             'kode_seri' => 'nullable|string',
             'tipe' => 'nullable|string',
@@ -89,15 +102,15 @@ class ProductController extends Controller
 
         $kategori = Kategori::firstOrCreate(
             ['slug' => Str::slug($namaProdukClean)],
-            ['nama_kategori' => $namaProdukClean]
+            ['nama_kategori' => $namaProdukClean, 'status' => 'nama']
         );
 
-        $data['kategori_id'] = $kategori->id;
-        $data['nama_produk'] = $namaProdukClean;
-
-        $data['slug'] = Str::slug($request->nama_produk);
-
-        $produk->update($data);
+        $produk->update([
+            'nama' => $namaProdukClean,
+            'kategori_id' => $kategori->id,
+            'satuan_id' => $request->satuan_id ?? $produk->satuan_id,
+            'deskripsi' => $request->deskripsi ?? $produk->deskripsi,
+        ]);
 
         return back()->with('success', 'Produk berhasil diperbarui');
     }

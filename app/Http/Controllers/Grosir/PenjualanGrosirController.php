@@ -369,8 +369,8 @@ class PenjualanGrosirController extends Controller
                 // Tambahkan kembali stok ke tabel ProdukVarian
                 $varian = ProdukVarian::find($itemLama->varian_id);
                 if ($varian) {
-                    $varian->stock()->increment('total_qty', $qtyTotalKembali);
-                    $varian->stock()->increment('total_unit', $jumlahRollKembali);
+                    $varian->stok()->increment('total_qty', $qtyTotalKembali);
+                    $varian->stok()->increment('total_unit', $jumlahRollKembali);
                 }
             }
 
@@ -461,7 +461,7 @@ class PenjualanGrosirController extends Controller
                     $produkDetail = ProdukDetail::find($detail->produk_detail_id);
 
                     if ($produkDetail) {
-                        $produkDetail->update(['status' => 'tersedia', 'gudang_id', 2]);
+                        $produkDetail->update(['status' => 'tersedia', 'gudang_id' => 2]);
                         $produkDetail->kartuStoks()->delete();
                     }
 
